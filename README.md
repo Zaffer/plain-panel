@@ -1,12 +1,18 @@
-# plainpanel
+# plain-panel
 
-A small signals library for dashboard control panels.
-Plain HTML, one store, no build step. ~800 lines of source.
+[plain-site](https://github.com/Zaffer/plain-site) for tools that do work:
+hardware control, experiments, procedures. A house style, three templates,
+and a small signals library. Plain HTML, one store, no build step.
 
-**Live demo - https://zaffer.github.io/plainpanel/examples/demo/**.
-GitHub Pages has no server behind it, so the experiment panels stay offline
-there. For the full version, run `npm run server` and open
-http://localhost:8780/examples/demo/.
+**Site, templates and demo: https://zaffer.github.io/plain-panel/**
+
+- [DESIGN.md](DESIGN.md) is the house style: it builds on plain-site's
+  manifesto and adds the rules for working screens, with one exception
+  (a short allowlist of functional CSS).
+- [templates/](templates/) holds three screen shapes to copy:
+  **station** (a workbench in the shape of an IDE), **lab** (experiments), **runsheet**
+  (procedures). Each one runs against a fake backend in `sim.js`.
+- This README is the library API.
 
 ## The idea
 
@@ -15,10 +21,10 @@ http://localhost:8780/examples/demo/.
   <output data-text="views.label"></output><br>
   <input id="volume" type="range" min="0" max="100" data-bind="state.volume">
 </label>
-<button data-on="click:actions.reset">↺ reset</button>
+<button data-on="click:actions.reset">🔄 reset</button>
 
 <script type="module">
-  import { signal, computed, bind } from './dist/plainpanel.js';
+  import { signal, computed, bind } from './dist/plain-panel.js';
 
   const state   = { volume: signal(40) };
   const views   = { label: computed(() => state.volume() + ' %') };
@@ -37,21 +43,24 @@ labelable child, here the `<output>`, and the slider has no accessible name.
 
 ## Install
 
-No build step. Copy `dist/plainpanel.js` into your project, or:
+No build step. Copy `dist/plain-panel.js` into your project, or:
 
 ```html
 <script type="module">
-  import { signal, bind } from 'https://cdn.jsdelivr.net/gh/Zaffer/plainpanel@v0.5.5/dist/plainpanel.js';
+  import { signal, bind } from 'https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js';
 </script>
 ```
 
-Pin a release tag (`@vX.Y.Z`); `@master` tracks the latest commit.
-
-Optional theme (dark, monospace, translucence):
+Pin a release tag (`@vX.Y.Z`); `@master` tracks the latest commit. With an
+importmap, the templates' `import ... from 'plain-panel'` works unchanged:
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zaffer/plainpanel@v0.5.5/plainpanel.css">
+<script type="importmap">
+  { "imports": { "plain-panel": "https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js" } }
+</script>
 ```
+
+There is no stylesheet. Controls keep the browser's look (DESIGN.md).
 
 ## Signals
 
@@ -124,7 +133,7 @@ p.slider('speed', state.speed, { min: 0, max: 5, step: 0.1, format: v => v.toFix
 p.number('count', state.count, { min: 0, max: 100, step: 1 });
 p.toggle('show grid', state.grid);
 p.select('mode', state.mode, ['auto', 'manual', { value: 'off', label: 'disabled' }]);
-p.button('▶ run', actions.run, { disabled: views.running }); // label may also be a computed
+p.button('▶️ run', actions.run, { disabled: views.running }); // label may also be a computed
 p.readout('status', views.statusLabel);
 p.text('name', state.name);
 p.color('trace color', state.color);
@@ -139,6 +148,28 @@ control takes an optional `{ disabled: readable }` as its last option
 panels follow the same gating as `data-disabled`:
 `p.toggle('⚡ armed', state.armed, { disabled: views.armLocked })`.
 
+## task(fn)
+
+One piece of async work (a request, a command, a measurement) with its
+progress in the store. The page can always show it, so nobody clicks twice
+wondering whether the first click took.
+
+```js
+const tasks = { save: task(async (body) => (await fetch('/api/save', { method: 'POST', body })).json()) };
+const actions = { save: () => tasks.save.run(JSON.stringify(form())) };
+```
+
+```html
+<button data-on="click:actions.save" data-disabled="tasks.save.pending">💾 save</button>
+<small data-text="tasks.save.error"></small>
+```
+
+`status()` is `'idle' | 'pending' | 'done' | 'failed'`; `pending()`,
+`error()` (the failure's message, or `''`) and `result()` are computeds.
+`run()` never rejects: it resolves to the result, or to `undefined` after a
+failure, which is also logged (`plain-panel: task failed:`). Calling `run()`
+while pending throws: disable the control instead.
+
 ## Edge helpers
 
 ```js
@@ -152,6 +183,14 @@ const sock = connect(() => `ws://localhost:8780/api/ws?since=${lastSeq()}`, {
 });
 sock.connected();   // computed<boolean>
 sock.send({ cmd: 'arm' });
+```
+
+`download(filename, content, type?)` hands the operator a file: a string
+as is (`'text/csv'`, …), an object as indented JSON.
+
+```js
+download('run-3.json', run);
+download('samples.csv', rows.join('\n'), 'text/csv');
 ```
 
 Native browser Observables (Chromium) fit the same way. They are streams
@@ -187,19 +226,23 @@ path walk: the current value, or the raw leaf (a signal, a handler).
 ```sh
 npm install
 npm run build      # esbuild bundle + type declarations → dist/
-npm test           # build + node --test (zero test deps)
+npm test           # build + node --test + typecheck (src, demo, templates, consumer types)
 npm run server     # FastAPI mock rig + statics → open http://localhost:8780/examples/demo/
 npm run types      # regenerate examples/demo/api.d.ts from the running server
-npm run serve      # static-only server (no API) → open :8137/examples/demo/
+npm run serve      # static-only server → open :8137/ (templates need no API)
 ```
 
 `dist/` is committed, so jsDelivr can serve it directly from GitHub.
 
-## Example
+## Templates and demo
 
-[`examples/demo/`](examples/demo/) is one dashboard with no build step. It
-shows three ownership domains on one page: a server-owned experiment, a
-client-owned control gallery, and imperative escape hatches (three.js, a
-canvas sparkline). Experiment commands show as pending ("arming…") until a
-snapshot confirms them, and a bottom-bar panel compares a signal with a
-native Observable. The UI rules it follows are in [DESIGN.md](DESIGN.md).
+| | Shape | Shows |
+|---|---|---|
+| [templates/station/](templates/station/) | IDE shell that fills the window | a workbench: top bar, side bar, main, bottom panel and status bar, each a tab row over one page, with draggable gaps. The example is a test bench: a signal source with start / stop / measure, a chart, a captures table, a log, the store as JSON, every native control bound, and a `panel()` twin of the form |
+| [templates/lab/](templates/lab/) | two columns that wrap | experiments: a `panel()`-built setup form, a server-side queue, live curves, a runs table, inspect and reuse |
+| [templates/runsheet/](templates/runsheet/) | one column, no CSS | a procedure: steps that unlock in order, readings with pass/fail, a saved draft, a downloadable record |
+| [examples/demo/](examples/demo/) | specimen | every native control bound, a three.js scene, the panel builder, a schema-driven form, signal vs Observable |
+
+Each template is `index.html` + `app.js` + `sim.js`. The sim is the only
+file that knows the backend; replace it and keep its API. The template JS is
+strict-type-checked by `npm test`.

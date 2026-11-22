@@ -35,3 +35,31 @@ export interface Socket {
  * (re)connect can build a cursor query like `?since=${lastSeq()}`.
  */
 export declare function connect(url: string | (() => string), opts: SocketOptions): Socket;
+export type TaskStatus = 'idle' | 'pending' | 'done' | 'failed';
+export interface Task<A extends unknown[], R> {
+    /**
+     * Starts the work. Resolves to the result, or to undefined when the work
+     * failed: it never rejects, the failure is in error(). Calling run() while
+     * pending is a bug (the control should be disabled) and throws.
+     */
+    run(...args: A): Promise<R | undefined>;
+    readonly status: Computed<TaskStatus>;
+    readonly pending: Computed<boolean>;
+    /** The last failure's message; '' while pending and after a success. */
+    readonly error: Computed<string>;
+    /** The last successful result. */
+    readonly result: Computed<R | undefined>;
+}
+/**
+ * One piece of async work (a request, a measurement, a command) with its
+ * progress in the store, so the page can always show it: bind
+ * data-disabled="tasks.save.pending" on the control and data-text on a
+ * status readout. Failures are logged and kept in error(), never dropped.
+ */
+export declare function task<A extends unknown[], R>(fn: (...args: A) => Promise<R> | R): Task<A, R>;
+/**
+ * Hands the operator a file: a CSV of samples, a JSON record. Data leaves the
+ * store at the edge, like a socket message arrives at it. Strings and
+ * objects are accepted; an object is written as indented JSON.
+ */
+export declare function download(filename: string, content: string | object, type?: string): void;

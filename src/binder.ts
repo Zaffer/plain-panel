@@ -49,7 +49,7 @@ function walk(scope: Scope, path: string): unknown {
   for (const key of path.split('.')) {
     if (isReadable(current)) current = current();
     if (current == null || !(key in Object(current))) {
-      throw new Error(`plainpanel: path "${path}" not found in scope (stopped at "${key}")`);
+      throw new Error(`plain-panel: path "${path}" not found in scope (stopped at "${key}")`);
     }
     current = current[key];
   }
@@ -66,7 +66,7 @@ export function resolveValue(scope: Scope, path: string): unknown {
   const v = walk(scope, path);
   if (isReadable(v)) return v();
   if (typeof v === 'function') {
-    throw new Error(`plainpanel: path "${path}" resolves to a plain function — bindable values must be signal(), computed(), or plain data`);
+    throw new Error(`plain-panel: path "${path}" resolves to a plain function — bindable values must be signal(), computed(), or plain data`);
   }
   return v;
 }
@@ -95,7 +95,7 @@ export function bind(root: Element | Document | DocumentFragment, scope: Scope):
   const writable = (path: string, attr: string): Signal<any> => {
     const leaf = untracked(() => resolveTarget(scope, path));
     if (!(typeof leaf === 'function' && isSignal(leaf as () => void))) {
-      throw new Error(`plainpanel: ${attr}="${path}" must point to a signal(), got ${typeof leaf}`);
+      throw new Error(`plain-panel: ${attr}="${path}" must point to a signal(), got ${typeof leaf}`);
     }
     // Re-resolve per use so the binding stays live when the path crosses a
     // signal whose value is swapped (a data-each row's $item, for instance).
@@ -108,7 +108,7 @@ export function bind(root: Element | Document | DocumentFragment, scope: Scope):
   const handler = (path: string) => {
     const leaf = untracked(() => resolveTarget(scope, path));
     if (typeof leaf !== 'function' || isReadable(leaf)) {
-      throw new Error(`plainpanel: data-on handler "${path}" is not a function`);
+      throw new Error(`plain-panel: data-on handler "${path}" is not a function`);
     }
     return (e: Event) => (resolveTarget(scope, path) as (e: Event) => void)(e);
   };
@@ -122,7 +122,7 @@ export function bind(root: Element | Document | DocumentFragment, scope: Scope):
 
     if (d.each !== undefined) {
       if (!(el instanceof HTMLTemplateElement)) {
-        throw new Error(`plainpanel: data-each="${d.each}" only works on <template> elements`);
+        throw new Error(`plain-panel: data-each="${d.each}" only works on <template> elements`);
       }
       stops.push(bindEach(el, scope));
       continue;
@@ -147,7 +147,7 @@ export function bind(root: Element | Document | DocumentFragment, scope: Scope):
     if (d.on !== undefined) {
       for (const pair of d.on.trim().split(/\s+/)) {
         const i = pair.indexOf(':');
-        if (i < 1) throw new Error(`plainpanel: data-on="${pair}" must be "event:path"`);
+        if (i < 1) throw new Error(`plain-panel: data-on="${pair}" must be "event:path"`);
         stops.push(listen(el, pair.slice(0, i), handler(pair.slice(i + 1))));
       }
     }
@@ -176,7 +176,7 @@ function bindEach(tpl: HTMLTemplateElement, scope: Scope): Stop {
   const keyPath = (tpl.dataset.key ?? '').trim();
   if (!keyPath) {
     throw new Error(
-      `plainpanel: data-each="${path}" requires data-key — a unique item field like data-key="id", ` +
+      `plain-panel: data-each="${path}" requires data-key — a unique item field like data-key="id", ` +
         `data-key="$item" for primitive items, or data-key="$index" for explicitly positional rows`,
     );
   }
@@ -187,7 +187,7 @@ function bindEach(tpl: HTMLTemplateElement, scope: Scope): Stop {
     if (isReadable(key)) key = key();
     if (typeof key === 'object' && key !== null) {
       throw new Error(
-        `plainpanel: data-key="${keyPath}" produced an object — keys must be primitive ` +
+        `plain-panel: data-key="${keyPath}" produced an object — keys must be primitive ` +
           `(fresh objects would defeat tracking); key by a field instead`,
       );
     }
@@ -205,7 +205,7 @@ function bindEach(tpl: HTMLTemplateElement, scope: Scope): Stop {
   const stopEffect = effect(() => {
     const items = resolveValue(scope, path);
     if (!Array.isArray(items)) {
-      throw new Error(`plainpanel: data-each="${path}" must read an array, got ${typeof items}`);
+      throw new Error(`plain-panel: data-each="${path}" must read an array, got ${typeof items}`);
     }
     // Row effects must be top-level (not children of this effect, which would
     // purge kept rows' bindings on every re-run), and item/index writes must
@@ -216,7 +216,7 @@ function bindEach(tpl: HTMLTemplateElement, scope: Scope): Stop {
       items.forEach((itemValue, i) => {
         const key = keyOf(itemValue, i);
         if (next.has(key)) {
-          throw new Error(`plainpanel: duplicate data-key value "${String(key)}" in data-each="${path}"`);
+          throw new Error(`plain-panel: duplicate data-key value "${String(key)}" in data-each="${path}"`);
         }
         let row = rows.get(key);
         if (row) {

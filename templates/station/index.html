@@ -1,0 +1,301 @@
+<!doctype html>
+<!--
+  plain-panel template: STATION. A workbench in the shape of an IDE.
+
+    top bar      the name, the commands that must always be in reach
+    side bar     tabs choose a view; a view is the controls for one job
+    main         tabs choose a page; a page is the work itself
+    bottom       tabs choose a page; a page is what the work left behind
+    status bar   one line: what is true now
+
+  Every region is the same thing: a row of tabs over one page. A tab row is a
+  radio group, and a page is a section that is hidden unless its tab is
+  chosen. To add a view, add a radio and a section.
+
+  Drag the gaps (or focus one and use the arrow keys) to resize. The side bar
+  and the bottom panel can be switched off.
+
+  The example is a test bench: a signal source to drive live values, and
+  every native control, bound. sim.js is the only file that knows the source.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bench</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<!-- In a copy of this template, point this at
+     https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js -->
+<script type="importmap">{ "imports": { "plain-panel": "../../dist/plain-panel.js" } }</script>
+<!-- Layout, the panel paint, and three lines of look. Switch it off in the
+     ☰ menu (🚫 no CSS): the page is then one column, top to bottom, and every
+     tab, control and value still works. -->
+<style>
+/* THE SHELL. A column: top bar, work area, status bar. The work area is a
+   row: side bar, then main over the bottom panel. It always fills the
+   window exactly, at any size, so there is no second layout for small screens. */
+body { margin: 0; padding: 6px; box-sizing: border-box; height: 100dvh; display: flex; flex-direction: column; gap: 6px; }
+#work { flex: 1 1 0; min-height: 0; display: flex; }
+#center { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+/* Main keeps a share of a small window: the bottom panel gives way first. */
+#main { flex: 1 1 0; min-height: min(6rem, 50%); }
+/* The side bar and the bottom panel keep the size the operator dragged
+   (app.js writes --side and --bottom), but never more than half the window. */
+#side { flex: 0 1 min(var(--side, 300px), 50vw); min-width: 0; }
+#bottom { flex: 0 1 min(var(--bottom, 200px), 50dvh); min-height: 0; }
+/* A region is a tab row over one page. The row stays; the page scrolls. */
+#side, #main, #bottom { display: flex; flex-direction: column; overflow: hidden; }
+section { flex: 1 1 0; min-height: 0; overflow: auto; }
+/* The hidden attribute always wins: no layout rule above may show a closed region. */
+[hidden] { display: none !important; }
+/* A fieldset may be narrower than its content, so a narrow side bar scrolls instead of spilling. */
+fieldset { min-width: 0; }
+
+/* THE GAPS ARE THE HANDLES. 6px between regions: drag one, and it lights up
+   under the pointer or the keyboard focus, in the system's own highlight colour. */
+[role=separator] { flex: none; touch-action: none; user-select: none; }
+#rzSide { width: 6px; cursor: col-resize; }
+#rzBottom { height: 6px; cursor: row-resize; }
+[role=separator]:hover, [role=separator]:focus-visible { background: Highlight; }
+
+/* THE PANEL PAINT. Each region is a box a shade off the page, with slightly
+   round corners, so its edge shows without a border. */
+:root { --page: light-dark(#ffffff, #000000); --panel: light-dark(#eeeeee, #111111); }
+body { background: var(--page); }
+header, footer, #side, #main, #bottom { background: var(--panel); border-radius: 5px; }
+fieldset, dialog, [popover] { border-radius: 5px; }
+header, footer, nav, section { padding: 4px 8px; }
+
+/* THE LOOK. Native controls already come in the system's interface font at
+   about this size: the text around them joins them. Nothing native is restyled. */
+body { font: 14px/1.4 system-ui, sans-serif; }
+/* Live numbers keep their width, so they do not jitter. */
+output, td { font-variant-numeric: tabular-nums; }
+/* A longer slider gives finer control; a wider box shows more. */
+input[type=range], textarea { width: 100%; box-sizing: border-box; }
+/* The chart fills its page; out of flow, so its pixel size never feeds back into the layout. */
+#chartPage { position: relative; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR: the name, and the commands that must always be in reach ═══ -->
+<header>
+<button popovertarget="menu" aria-label="menu" title="menu">☰</button>
+<div popover id="menu">
+<p>theme:
+<label><input type="radio" name="theme" value="dark" data-bind="ui.theme"> ☾ dark</label>
+<label><input type="radio" name="theme" value="light" data-bind="ui.theme"> ☀ light</label>
+<p><label><input type="checkbox" data-bind="ui.noCss"> 🚫 no CSS</label>
+<p><button popovertarget="menu" popovertargetaction="hide">× close</button>
+</div>
+<strong>Bench</strong> |
+<button data-on="click:actions.start" data-disabled="views.startLocked">▶️ start</button>
+<button accesskey="x" data-on="click:actions.stop">⏹️ stop</button>
+<small><kbd>Alt</kbd>+<kbd>X</kbd></small> |
+show:
+<label title="Alt+B"><input type="checkbox" switch accesskey="b" data-bind="ui.side"> side bar</label>
+<label title="Alt+J"><input type="checkbox" switch accesskey="j" data-bind="ui.bottom"> bottom panel</label>
+</header>
+
+<div id="work">
+
+<!-- ═══ SIDE BAR: the controls, one view for each job ═══ -->
+<aside id="side" data-show="ui.side">
+<nav aria-label="side bar views">
+<label><input type="radio" name="sideTab" value="source" data-bind="ui.sideTab"> source</label>
+<label><input type="radio" name="sideTab" value="controls" data-bind="ui.sideTab"> controls</label>
+<label><input type="radio" name="sideTab" value="builder" data-bind="ui.sideTab"> builder</label>
+</nav>
+
+<section data-show="views.side.source">
+
+<!-- data-inert: the settings lock while a measurement runs, so its record is true -->
+<fieldset data-inert="tasks.measure.pending">
+<legend>signal</legend>
+wave:
+<label><input type="radio" name="wave" value="sine" data-bind="params.wave"> sine</label>
+<label><input type="radio" name="wave" value="square" data-bind="params.wave"> square</label>
+<label><input type="radio" name="wave" value="saw" data-bind="params.wave"> saw</label>
+<label><input type="radio" name="wave" value="random" data-bind="params.wave"> random</label>
+<p><label for="freq">frequency <output data-text="views.freq"></output></label><br>
+<input id="freq" type="range" min="0.1" max="2" step="0.1" data-bind="params.freq" data-wheel>
+<p><label for="amp">amplitude <output data-text="views.amp"></output></label><br>
+<input id="amp" type="range" min="0" max="3" step="0.05" data-bind="params.amp" data-wheel>
+<mark data-show="views.over">⚠️ above 2 V: past the level meter's good range</mark>
+<p><label>noise <input type="number" min="0" max="1" step="0.05" data-bind="params.noise" data-wheel> V</label>
+<p><label>trace colour <input type="color" data-bind="params.color"></label>
+<p><button data-on="click:actions.reset">🔄 reset</button>
+<small data-show="tasks.measure.pending">🔒 locked while measuring</small>
+</fieldset>
+
+<fieldset>
+<legend>measure</legend>
+<label>duration <input type="number" min="1" max="10" step="1" data-bind="ui.seconds" data-disabled="tasks.measure.pending"> s</label>
+<p><button data-on="click:actions.measure" data-disabled="views.measureLocked">▶️ measure</button>
+<small data-text="views.measureNote"></small>
+<p><small>Takes the mean and RMS of the signal, and adds a row to the captures page.
+The source must be running. ⏹️ stop ends a measurement early: it fails, and says so.</small>
+</fieldset>
+
+</section>
+
+<section data-show="views.side.controls">
+<!-- Every native control, bound. Watch the store page in the bottom panel.
+     <details name>: a native accordion. The first one's open state is in the store. -->
+<fieldset>
+<legend>every control</legend>
+
+<details name="gallery" data-bind="ui.textOpen">
+<summary>text</summary>
+<p><label>text <input type="text" data-bind="g.text"></label>
+<p><label>search <input type="search" data-bind="g.search"></label>
+<p><label>tel <input type="tel" data-bind="g.tel"></label>
+<p><label>url <input type="url" data-bind="g.url"></label>
+<p><label>email <input type="email" data-bind="g.email"></label>
+<p><label>password <input type="password" data-bind="g.password"></label>
+<p><label>with suggestions <input type="text" list="ports" data-bind="g.combo"></label>
+<datalist id="ports"><option value="/dev/ttyUSB0"><option value="/dev/ttyACM0"><option value="COM3"></datalist>
+<p><label>textarea<br><textarea rows="3" data-bind="g.notes"></textarea></label>
+</details>
+
+<details name="gallery">
+<summary>numbers</summary>
+<p><label>number <input type="number" min="0" max="100" step="1" data-bind="g.number" data-wheel></label>
+<p><label for="gRange">range <output data-text="g.range"></output></label><br>
+<input id="gRange" type="range" min="0" max="100" step="1" data-bind="g.range" data-wheel>
+<p>the same two values, read only:
+<br><label>progress <progress max="100" data-bind="g.number"></progress></label>
+<br><label>meter <meter min="0" max="100" low="30" high="70" optimum="100" data-bind="g.range"></meter></label>
+</details>
+
+<details name="gallery">
+<summary>date and time</summary>
+<p><label>date <input type="date" data-bind="g.date"></label>
+<p><label>time <input type="time" data-bind="g.time"></label>
+<p><label>date and time <input type="datetime-local" data-bind="g.datetime"></label>
+<p><label>month <input type="month" data-bind="g.month"></label>
+<p><label>week <input type="week" data-bind="g.week"></label>
+</details>
+
+<details name="gallery">
+<summary>choices</summary>
+<p><label><input type="checkbox" data-bind="g.checkbox"> checkbox</label>
+<p><label><input type="checkbox" switch data-bind="g.switch"> switch</label>
+<p>radio:
+<label><input type="radio" name="gRadio" value="a" data-bind="g.radio"> a</label>
+<label><input type="radio" name="gRadio" value="b" data-bind="g.radio"> b</label>
+<label><input type="radio" name="gRadio" value="c" data-bind="g.radio"> c</label>
+<p><label>select
+<select data-bind="g.select">
+<optgroup label="fast"><option value="115200">115200 baud</option><option value="57600">57600 baud</option></optgroup>
+<optgroup label="slow"><option value="9600">9600 baud</option></optgroup>
+</select></label>
+<p><label>select, many<br>
+<select multiple size="3" data-bind="g.many">
+<option value="x">x axis</option><option value="y">y axis</option><option value="z">z axis</option>
+</select></label>
+</details>
+
+<details name="gallery">
+<summary>file and colour</summary>
+<p><label>files <input type="file" multiple data-bind="g.files"></label>
+<br><small>chosen: <output data-text="views.fileNames"></output></small>
+<p><label>colour <input type="color" data-bind="g.color"></label>
+</details>
+
+</fieldset>
+</section>
+
+<section data-show="views.side.builder">
+<p><small>The same store, drawn a second time by <code>panel()</code> from app.js.
+Move a control here and its twin in the source view moves too.</small>
+<!-- a div, not a fieldset: panel() adds children at run time (CLAUDE.md) -->
+<div id="builder"></div>
+</section>
+</aside>
+
+<div id="rzSide" data-rz="side" data-show="views.sideHandle" role="separator" tabindex="0" title="drag to resize" aria-orientation="vertical" aria-label="resize the side bar: drag, or arrow keys"
+  data-on="pointerdown:actions.rzDown pointermove:actions.rzMove pointerup:actions.rzUp pointercancel:actions.rzUp keydown:actions.rzKey"></div>
+
+<div id="center">
+
+<!-- ═══ MAIN: the work itself ═══ -->
+<main id="main">
+<nav aria-label="main pages">
+<label><input type="radio" name="mainTab" value="chart" data-bind="ui.mainTab"> chart</label>
+<label><input type="radio" name="mainTab" value="captures" data-bind="ui.mainTab"> captures <output data-text="views.captureCount"></output></label>
+</nav>
+
+<section id="chartPage" data-show="views.main.chart">
+<canvas id="chart" width="640" height="320">A chart of the signal over the last 20 seconds.</canvas>
+</section>
+
+<section data-show="views.main.captures">
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+<thead><tr><th align="left">time</th><th align="left">signal</th><th align="right">samples</th>
+<th align="right">mean</th><th align="right">RMS</th><th align="right">min</th><th align="right">max</th></tr></thead>
+<tbody>
+<template data-each="views.rows" data-key="id">
+<tr><td nowrap><time data-text="$item.time"></time></td><td data-text="$item.signal"></td>
+<td align="right" data-text="$item.n"></td><td align="right" nowrap data-text="$item.mean"></td>
+<td align="right" nowrap data-text="$item.rms"></td><td align="right" nowrap data-text="$item.min"></td>
+<td align="right" nowrap data-text="$item.max"></td></tr>
+</template>
+</tbody>
+</table>
+<p data-show="views.noCaptures">No captures yet: start the source, then press ▶️ measure in the source view.
+<p><button data-on="click:actions.downloadCsv" data-disabled="views.noCaptures">⬇️ download CSV</button>
+<button commandfor="confirmDelete" command="show-modal" data-disabled="views.noCaptures">🗑️ delete all…</button>
+</section>
+</main>
+
+<div id="rzBottom" data-rz="bottom" data-show="views.bottomHandle" role="separator" tabindex="0" title="drag to resize" aria-orientation="horizontal" aria-label="resize the bottom panel: drag, or arrow keys"
+  data-on="pointerdown:actions.rzDown pointermove:actions.rzMove pointerup:actions.rzUp pointercancel:actions.rzUp keydown:actions.rzKey"></div>
+
+<!-- ═══ BOTTOM PANEL: what the work left behind ═══ -->
+<div id="bottom" data-show="ui.bottom">
+<nav aria-label="bottom panel pages">
+<label><input type="radio" name="bottomTab" value="log" data-bind="ui.bottomTab"> log</label>
+<label><input type="radio" name="bottomTab" value="store" data-bind="ui.bottomTab"> store</label>
+</nav>
+
+<section data-show="views.bottom.log">
+<table cellpadding="2" cellspacing="0" aria-label="log, newest first">
+<tbody>
+<template data-each="log" data-key="id">
+<tr><td valign="top" nowrap><time data-text="$item.time"></time></td>
+<td valign="top" data-text="$item.mark"></td><td data-text="$item.text"></td></tr>
+</template>
+</tbody>
+</table>
+</section>
+
+<section data-show="views.bottom.store">
+<pre data-text="views.json"></pre>
+</section>
+</div>
+
+</div>
+</div>
+
+<!-- ═══ STATUS BAR: one line, what is true now ═══ -->
+<footer>
+<output data-text="views.liveLabel"></output> |
+value <output data-text="views.value"></output>
+<meter min="-3" max="3" low="-2" high="2" optimum="0" data-bind="views.level" title="level: good inside ±2 V"></meter> |
+<span data-show="tasks.measure.pending">⏳ measuring <progress max="1" data-bind="views.progress"></progress> |</span>
+<small data-text="views.lastLog"></small>
+</footer>
+
+<dialog id="confirmDelete" closedby="any">
+<p>Delete <output data-text="views.captureCount"></output> captures? You cannot undo this.
+<p><button commandfor="confirmDelete" command="close" data-on="click:actions.deleteCaptures">🗑️ delete the captures</button>
+<button commandfor="confirmDelete" command="close" autofocus>keep them</button>
+</dialog>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

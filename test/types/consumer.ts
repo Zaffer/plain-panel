@@ -1,7 +1,7 @@
 // Compile-only check: the published types resolve for a consumer using
 // Node-style ESM resolution (NodeNext), with nothing silently `any`.
 // Run by `npm run typecheck` (part of `npm test`); never executed.
-import { signal, computed, trigger, isSignal, isComputed, bind, panel, connect, series } from 'plainpanel';
+import { signal, computed, trigger, isSignal, isComputed, bind, panel, connect, series } from 'plain-panel';
 
 type IsAny<T> = 0 extends 1 & T ? true : false;
 const notAny: [

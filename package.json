@@ -1,29 +1,27 @@
 {
-  "name": "plainpanel",
-  "version": "0.5.5",
-  "description": "Signals-first micro-library for research dashboard controls. Real HTML, one store, no build step for consumers.",
+  "name": "plain-panel",
+  "version": "0.6.0",
+  "description": "Signals for working web tools: hardware control, experiments, procedures. Plain HTML, one store, no build step. Builds on plain-site.",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/plainpanel.d.ts",
-      "import": "./dist/plainpanel.js"
-    },
-    "./plainpanel.css": "./plainpanel.css"
+      "types": "./dist/plain-panel.d.ts",
+      "import": "./dist/plain-panel.js"
+    }
   },
-  "types": "./dist/plainpanel.d.ts",
+  "types": "./dist/plain-panel.d.ts",
   "files": [
-    "dist",
-    "plainpanel.css"
+    "dist"
   ],
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/plainpanel.js && tsc -p tsconfig.json",
+    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/plain-panel.js && tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.js && npm run typecheck",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p examples/demo/jsconfig.json && tsc -p test/types",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p examples/demo/jsconfig.json && tsc -p templates/jsconfig.json && tsc -p test/types",
     "serve": "python3 -m http.server 8137",
     "server": "uv run --with fastapi --with uvicorn --with websockets examples/demo/server.py",
     "types": "npx -y openapi-typescript http://localhost:8780/openapi.json -o examples/demo/api.d.ts"
   },
-  "repository": "github:Zaffer/plainpanel",
+  "repository": "github:Zaffer/plain-panel",
   "license": "MIT",
   "author": "James Wiles (https://github.com/Zaffer)",
   "sideEffects": false,
@@ -43,5 +41,6 @@
     "alien-signals": "3.2.1",
     "esbuild": "^0.25.0",
     "typescript": "^5.9.0"
-  }
+  },
+  "homepage": "https://zaffer.github.io/plain-panel/"
 }

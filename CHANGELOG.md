@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.6.0 — 2026-11-22
+
+Breaking: the project is renamed, and the theme stylesheet is gone.
+
+- **Renamed plainpanel → plain-panel**: the npm name, the GitHub repo
+  (github.com/Zaffer/plain-panel; the old URL redirects), the bundle
+  (`dist/plain-panel.js`) and the error prefix (`plain-panel:`). Pinned old
+  jsDelivr URLs (`gh/Zaffer/plainpanel@v0.5.5/dist/plainpanel.js`) still work.
+- **plain-panel now builds on plain-site.** DESIGN.md is rewritten as the
+  house style for working tools: plain-site's manifesto, plus one exception
+  (a short allowlist of functional CSS), screen shapes, feedback rules
+  (ground truth, staleness, the always-there stop), and a house glyph set.
+- **Removed `plainpanel.css`** (the decorative dark/monospace theme) and its
+  package export. Controls keep the browser's look; colour comes from HTML.
+- New `task(fn)`: async work with `status` / `pending` / `error` / `result`
+  in the store, so every request shows pending and failure.
+- New `download(filename, content, type?)`: hands the operator a file.
+- **Three templates** in templates/: station (an IDE-shaped workbench), lab
+  (experiments, `panel()`-built setup), runsheet (a procedure, no CSS).
+  Each runs against a fake backend in `sim.js`; their JS is type-checked.
+- New zero-CSS landing page (index.html) for GitHub Pages; `.nojekyll`.
+- **The panel paint** is part of the house style (DESIGN.md §1): one page
+  colour, one panel colour a shade apart (`light-dark()`), and 5px corners on
+  panels, fieldsets and dialogs, so each panel is a box with its content
+  inside. The station and lab templates use it; the demo keeps its own theme
+  switch.
+- **Emoji in buttons, not glyphs.** Symbol characters (▶ ■ ✓ ↺) can come from
+  fallback fonts with other metrics and make buttons uneven, differently per
+  device. DESIGN.md rule 18 explains when to be careful, and gives a house set
+  of emoji, written with U+FE0F. Glyphs stay where size does not matter (the
+  ⋮ ⋯ resize grips). Resize handles also get a "drag to resize" title.
+- Station template: a workbench in the shape of an IDE. Top bar, side bar,
+  main, bottom panel, status bar; each region is a tab row (a radio group)
+  over one page (a section, `hidden` unless chosen). The gaps are the resize
+  handles (drag, or arrow keys); the side bar and bottom panel switch off
+  (Alt+B, Alt+J). It fills a window of any size with no second layout. The
+  example is a test bench: a signal source, a chart, captures, a log, the
+  store as JSON, every native control bound, and a `panel()` twin.
+- Template chart.js: with no CSS on a high-density display the canvas grew
+  without end (its box followed its own pixel size). It now draws 1:1 there,
+  at the size its HTML `width` / `height` give.
+
 ## 0.5.5 — 2026-10-12
 
 - **Types now resolve for NodeNext consumers.** `dist/plainpanel.d.ts` and

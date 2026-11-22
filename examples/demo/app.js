@@ -11,7 +11,7 @@
 // api.d.ts from the running server's OpenAPI).
 /** @typedef {import('./api').components['schemas']['Snapshot']} Snapshot */
 /** @typedef {'arm' | 'disarm' | 'start' | 'stop'} Command */
-import { signal, computed, effect, batch, untracked, bind, panel, connect, series } from '../../dist/plainpanel.js';
+import { signal, computed, effect, batch, untracked, bind, panel, connect, series } from '../../dist/plain-panel.js';
 import { createStage } from './stage.js';
 
 // ---------- SERVER state: one signal, written only by the socket ----------
@@ -153,7 +153,7 @@ const views = {
     snapshot.page = ui.page();
     return JSON.stringify(snapshot, null, 1);
   }),
-  features: computed(() => FEATURES.map((f) => ({ label: f.label, value: f.ok ? '✓' : '✗' }))),
+  features: computed(() => FEATURES.map((f) => ({ label: f.label, value: f.ok ? '✅' : '❌' }))),
   noObservable: computed(() => !('when' in EventTarget.prototype)),
 };
 
@@ -173,7 +173,7 @@ const FEATURES = [
 ];
 
 // ---------- commands go TO the server; they never write snap ----------
-// DESIGN.md rule 6: a command reads as pending ("arming…") from the click
+// DESIGN.md rule 11: a command reads as pending ("arming…") from the click
 // until a snapshot shows it landed, or the server refuses it. Every
 // experiment control stays locked meanwhile, so nobody clicks twice
 // wondering whether the first one took.
@@ -268,7 +268,7 @@ effect(() => {
 // ---------- signal vs observable: the same clicks, two models ----------
 // An observable is events over time: it has no current value, and every
 // event is delivered. A signal is the value now: a write of the same value
-// is a no-op, so its effects run only on a real change. The plainpanel rule
+// is a no-op, so its effects run only on a real change. The plain-panel rule
 // (invariant 3): the stream stays at the edge and writes the store.
 const sv = {
   events: signal(0), // events the observable delivered
@@ -297,7 +297,7 @@ effect(() => stage.setSpin(params.spinX(), params.spinY()));
 effect(() => stage.setWireframe(params.wireframe()));
 effect(() => stage.setColor(params.color()));
 effect(() => stage.setRunning(ui.scene()));
-stage.onStats(stats); // a signal is a setter: ~5 Hz snapshots out of the render loop → one signal write
+stage.onStats(stats); // a signal is a setter: ~5 Hz snapshots out of the render loop, as one signal write
 
 // ---------- layout & chrome: the same pattern — effects push store values out ----------
 const rootStyle = document.documentElement.style;
@@ -327,21 +327,21 @@ object.select('shape', params.shape, [{ value: 'knot', label: '🥨 torus knot' 
 object.slider('scale', params.scale, { min: 0.2, max: 3, step: 0.01, format: (v) => v.toFixed(2) });
 object.slider('spin x', params.spinX, { min: -3, max: 3, step: 0.1, format: (v) => v.toFixed(1) });
 object.slider('spin y', params.spinY, { min: -3, max: 3, step: 0.1, format: (v) => v.toFixed(1) });
-object.toggle('🕸 wireframe', params.wireframe);
+object.toggle('🕸️ wireframe', params.wireframe);
 object.color('color', params.color);
 
 const mirror = p.folder('gallery mirror (two-way proof)', false);
 mirror.text('text', g.text);
 mirror.number('number', g.number, { min: 0, max: 100, step: 1 });
 mirror.slider('range', g.range, { min: 0, max: 1, step: 0.01 });
-mirror.toggle('☑ checkbox', g.checkbox);
+mirror.toggle('☑️ checkbox', g.checkbox);
 mirror.select('radio group', g.radio, [{ value: 'alpha', label: 'α alpha' }, { value: 'beta', label: 'β beta' }, { value: 'gamma', label: 'γ gamma' }]);
 mirror.select('select', g.select, [{ value: 'one', label: '1️⃣ one' }, { value: 'two', label: '2️⃣ two' }, { value: 'three', label: '3️⃣ three' }]);
 mirror.readout('last ping', g.pinged);
 
 const experiment = p.folder('experiment (server-owned)');
 experiment.toggle('⚡ armed', arm.on, { disabled: views.armLocked });
-experiment.button('⏹ stop', actions.stop, { disabled: views.stopLocked });
+experiment.button('⏹️ stop', actions.stop, { disabled: views.stopLocked });
 experiment.readout('status', views.statusLabel);
 experiment.readout('metric', views.metricLabel);
 
@@ -390,7 +390,7 @@ try {
     else sp.text(param.name, sig, locked);
   }
   sp.button(
-    '▶ start run',
+    '▶️ start run',
     () => command('start', Object.fromEntries(Object.entries(form).map(([k, s]) => [k, s()]))),
     { disabled: views.startLocked },
   );

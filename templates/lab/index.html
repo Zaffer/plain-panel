@@ -1,0 +1,143 @@
+<!doctype html>
+<!--
+  plain-panel template: LAB. Set up a run, queue it, watch it, compare.
+  Two columns that wrap: setup on the left, results on the right.
+  The setup form is made by the panel() builder (app.js). Replace the fake
+  training server with yours: sim.js is the only file that knows it.
+  The rules are in DESIGN.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiments</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<!-- In a copy of this template, point this at
+     https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js -->
+<script type="importmap">{ "imports": { "plain-panel": "../../dist/plain-panel.js" } }</script>
+<!-- Functional CSS only (DESIGN.md §1). Delete this element: the page still
+     works as one column. -->
+<style>
+/* Setup beside results on a wide screen, above them on a narrow one. */
+main { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+#setup { flex: 1 1 18rem; max-width: 26rem; }
+#results { flex: 999 1 32rem; min-width: 0; }
+/* The panel paint: each region is a box a shade off the page, its content
+   inside, with slightly round corners, so its edge shows without a border. */
+:root { --page: light-dark(#ffffff, #000000); --panel: light-dark(#eeeeee, #111111); }
+body { background: var(--page); }
+#setup, #results { background: var(--panel); border-radius: 5px; }
+fieldset, dialog, [popover] { border-radius: 5px; }
+/* Numbers that change each epoch keep their width. */
+output, td { font-variant-numeric: tabular-nums; }
+/* Sliders and the chart use the full column. */
+input[type=range], canvas { width: 100%; }
+canvas { height: 18rem; }
+</style>
+</head>
+<body>
+
+<h1>Experiments</h1>
+
+<button popovertarget="menu" aria-label="menu" title="menu">☰</button>
+<div popover id="menu">
+<p>theme:
+<label><input type="radio" name="theme" value="dark" data-bind="ui.theme"> ☾ dark</label>
+<label><input type="radio" name="theme" value="light" data-bind="ui.theme"> ☀ light</label>
+<p><label><input type="checkbox" data-bind="ui.noCss"> 🚫 no CSS</label>
+<p><button popovertarget="menu" popovertargetaction="hide">× close</button>
+</div>
+
+<p><output data-text="views.queueLabel"></output>
+<progress max="1" data-bind="views.progress"></progress>
+<br><button data-on="click:actions.pause" data-disabled="views.pauseLocked">⏸️ pause</button>
+<button data-on="click:actions.resume" data-disabled="views.resumeLocked">▶️ resume</button>
+<button commandfor="confirmCancel" command="show-modal" data-disabled="views.cancelLocked">⏹️ cancel run…</button>
+<small data-text="views.queueNote"></small>
+
+<main>
+
+<section id="setup">
+<!-- app.js builds the form in here with panel() -->
+<fieldset id="setupBox">
+<legend>next run</legend>
+</fieldset>
+<!-- panel.add() moves this into the form: any element can join a built panel -->
+<details id="formJson">
+<summary>config as JSON</summary>
+<pre data-text="views.formJson"></pre>
+</details>
+</section>
+
+<section id="results">
+<fieldset>
+<legend>
+<label><input type="radio" name="page" value="curves" data-bind="ui.page"> 📈 curves</label>
+<label><input type="radio" name="page" value="runs" data-bind="ui.page"> 🗂️ runs <output data-text="views.runCount"></output></label>
+<label><input type="radio" name="page" value="inspect" data-bind="ui.page"> 🔎 inspect</label>
+</legend>
+
+<div data-show="views.pageCurves">
+<p>metric:
+<label><input type="radio" name="metric" value="val" data-bind="ui.metric"> validation loss</label>
+<label><input type="radio" name="metric" value="train" data-bind="ui.metric"> training loss</label>
+<label><input type="radio" name="metric" value="acc" data-bind="ui.metric"> accuracy</label>
+<p data-show="views.noRuns">No curves yet: queue a run.
+<p><canvas id="chart">Curves of the selected metric, one line for each run ticked on the runs page.</canvas>
+<p><small>Each line is labelled with its run. Untick a run on the runs page to hide its curve.</small>
+</div>
+
+<div data-show="views.pageRuns">
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+<thead><tr bgcolor="gray"><th align="left">run (tick to show)</th><th align="left">status</th>
+<th align="right">epoch</th><th align="right">best val loss</th><th align="right">accuracy</th>
+<th align="right">time</th><th></th></tr></thead>
+<tbody>
+<template data-each="views.rows" data-key="id">
+<tr>
+<td valign="top" nowrap><label><input type="checkbox" data-bind="$item.show"> <b data-text="$item.name"></b></label></td>
+<td valign="top"><span data-text="$item.status"></span><br><small data-text="$item.error"></small></td>
+<td valign="top" align="right" data-text="$item.epoch"></td>
+<td valign="top" align="right" data-text="$item.best"></td>
+<td valign="top" align="right" data-text="$item.acc"></td>
+<td valign="top" align="right" data-text="$item.time"></td>
+<td valign="top"><button data-on="click:$item.inspect">🔎 inspect</button></td>
+</tr>
+</template>
+</tbody>
+</table>
+<p data-show="views.noRuns">No runs yet. Set up a run on the left and press ▶️ queue run.
+<p><button commandfor="confirmDelete" command="show-modal" data-disabled="views.noFinished">🗑️ delete finished runs…</button>
+<small data-text="views.removeNote"></small>
+</div>
+
+<div data-show="views.pageInspect">
+<p data-show="views.noInspect">Choose a run: press inspect on the runs page.
+<div data-show="views.hasInspect">
+<p><b data-text="views.inspectTitle"></b>
+<p><button data-on="click:actions.reuse">reuse this config</button>
+<button data-on="click:actions.downloadRun">⬇️ download JSON</button>
+<pre data-text="views.inspectJson"></pre>
+</div>
+</div>
+</fieldset>
+</section>
+
+</main>
+
+<dialog id="confirmCancel" closedby="any">
+<p>Cancel <output data-text="views.cancelText"></output>? Its curves so far are kept.
+<p><button commandfor="confirmCancel" command="close" data-on="click:actions.cancel">⏹️ cancel the run</button>
+<button commandfor="confirmCancel" command="close" autofocus>▶️ keep training</button>
+</dialog>
+
+<dialog id="confirmDelete" closedby="any">
+<p>Delete <output data-text="views.finishedCount"></output> finished runs and their curves? You cannot undo this.
+<p><button commandfor="confirmDelete" command="close" data-on="click:actions.deleteFinished">🗑️ delete them</button>
+<button commandfor="confirmDelete" command="close" autofocus>keep them</button>
+</dialog>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

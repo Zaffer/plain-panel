@@ -1,0 +1,137 @@
+<!doctype html>
+<!--
+  plain-panel template: SHEET. One column, a document: a procedure that
+  records measurements, checks them, and makes a signed record.
+  No CSS at all. Each step unlocks when the step before it passes.
+  Replace the load cell with your device: sim.js is the only file that
+  knows it. The rules are in DESIGN.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Load cell calibration</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<!-- In a copy of this template, point this at
+     https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js -->
+<script type="importmap">{ "imports": { "plain-panel": "../../dist/plain-panel.js" } }</script>
+</head>
+<body>
+
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td></td><td width="720">
+
+<h1>Load cell calibration</h1>
+
+<p>Calibrate the thrust stand's load cell: find its zero, find its scale with a reference
+mass, then check the result with a second mass. Do the steps in order. Each step unlocks
+when the step before it passes. The sheet is saved in this browser as you work.</p>
+
+<p><label for="done">progress <output data-text="views.progressLabel"></output></label>
+<progress id="done" max="4" data-bind="views.passed"></progress>
+<br><small data-text="views.savedNote"></small></p>
+
+<hr noshade size="1">
+
+<fieldset>
+<legend>Step 1, identify: <output data-text="views.s1.label"></output></legend>
+<p><label>unit serial <input data-bind="sheet.serial" placeholder="TS-0042" pattern="TS-[0-9]{4}" required size="10"></label>
+<p><label>operator <input data-bind="sheet.operator" autocomplete="name" required></label>
+<p><label>room temperature <input type="number" min="10" max="40" step="0.5" data-bind="sheet.ambient"> °C</label>
+<p><small data-text="views.s1.note"></small>
+</fieldset>
+
+<p>
+
+<fieldset data-inert="views.s2.locked">
+<legend>Step 2, zero: <output data-text="views.s2.label"></output></legend>
+<p>Remove all load from the cell. Do not touch the stand while it reads.
+<p><label><input type="checkbox" data-bind="sheet.unloaded"> the cell has no load on it</label>
+<p><button data-on="click:actions.readZero" data-disabled="views.zeroLocked">▶️ read zero</button>
+<small data-text="views.zeroNote"></small>
+<p>zero <output data-text="views.zero"></output>
+<p><small>Pass: the noise is below 4 counts.</small>
+</fieldset>
+
+<p>
+
+<fieldset data-inert="views.s3.locked">
+<legend>Step 3, scale: <output data-text="views.s3.label"></output></legend>
+<p>Put the reference mass on the centre of the cell. Take 3 to 5 readings. Lift the mass
+off and put it back between readings.
+<p><label>reference mass
+<select data-bind="sheet.mass"><option value="100">100 g</option><option value="500">500 g</option><option value="1000">1000 g</option></select></label>
+<p><label><input type="checkbox" data-bind="sheet.massOn"> the reference mass is on the cell</label>
+<p><button data-on="click:actions.readSpan" data-disabled="views.spanLocked">▶️ add a reading</button>
+<small data-text="views.spanNote"></small>
+<div>
+<table border="1" cellpadding="4" cellspacing="0">
+<thead><tr><th>#</th><th>mass</th><th align="right">counts</th><th align="right">scale, counts/g</th><th></th></tr></thead>
+<tbody>
+<template data-each="views.spanRows" data-key="id">
+<tr><td data-text="$item.n"></td><td data-text="$item.mass"></td><td align="right" data-text="$item.mean"></td>
+<td align="right" data-text="$item.scale"></td><td><button data-on="click:$item.remove">🗑️ remove</button></td></tr>
+</template>
+</tbody>
+</table>
+</div>
+<p>scale <output data-text="views.scale"></output>
+<br>repeatability <output data-text="views.repeat"></output>
+<p><small>Pass: 3 or more readings that agree within 0.05 %.</small>
+</fieldset>
+
+<p>
+
+<fieldset data-inert="views.s4.locked">
+<legend>Step 4, check: <output data-text="views.s4.label"></output></legend>
+<p>Take the reference mass off. Put a different, known mass on the cell.
+<p><label>check mass <input type="number" min="10" max="2000" step="1" data-bind="sheet.checkMass"> g</label>
+<p><label><input type="checkbox" data-bind="sheet.checkOn"> the check mass is on the cell</label>
+<p><button data-on="click:actions.readCheck" data-disabled="views.checkLocked">▶️ read</button>
+<small data-text="views.checkNote"></small>
+<p>indicated <output data-text="views.indicated"></output>
+<br><label for="err">error <output data-text="views.error"></output></label>
+<meter id="err" min="0" max="1" low="0.25" high="0.5" optimum="0" data-bind="views.errorAbs"></meter>
+<p><small>Pass: the error is below 0.5 %.</small>
+</fieldset>
+
+<p>
+
+<fieldset data-inert="views.s5.locked">
+<legend>Step 5, sign off: <output data-text="views.s5.label"></output></legend>
+<p><label>notes<br><textarea rows="3" cols="60" data-bind="sheet.notes"></textarea></label>
+<p><label>photos of the setup <input type="file" accept="image/*" multiple data-bind="photos"></label>
+<br><small data-text="views.photoNote"></small>
+<p><label><input type="checkbox" data-bind="sheet.confirmed"> I did these steps, and the results above are true</label>
+<p><button data-on="click:actions.download" data-disabled="views.recordLocked">⬇️ download the record</button>
+<button data-on="click:actions.print" data-disabled="views.recordLocked">print</button>
+</fieldset>
+
+<h2>Summary</h2>
+
+<table border="1" cellpadding="4" cellspacing="0" width="100%">
+<tr><th align="left">step</th><th align="left">result</th><th align="left">status</th></tr>
+<tr><td>1 identify</td><td data-text="views.s1.result"></td><td data-text="views.s1.label"></td></tr>
+<tr><td>2 zero</td><td data-text="views.zero"></td><td data-text="views.s2.label"></td></tr>
+<tr><td>3 scale</td><td data-text="views.scale"></td><td data-text="views.s3.label"></td></tr>
+<tr><td>4 check</td><td data-text="views.error"></td><td data-text="views.s4.label"></td></tr>
+<tr><td>5 sign off</td><td data-text="sheet.operator"></td><td data-text="views.s5.label"></td></tr>
+</table>
+
+<p><button commandfor="confirmNew" command="show-modal">start a new sheet…</button>
+
+<hr noshade size="1">
+
+<p><small>Template: sheet | no CSS | <a href="../../DESIGN.md">DESIGN.md</a> | <a href="#">top</a></small></p>
+
+</td><td></td></tr></table>
+
+<dialog id="confirmNew" closedby="any">
+<p>Clear this sheet and start again? The results are lost unless you downloaded them.
+<p><button commandfor="confirmNew" command="close" data-on="click:actions.clear">🗑️ clear the sheet</button>
+<button commandfor="confirmNew" command="close" autofocus>keep it</button>
+</dialog>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

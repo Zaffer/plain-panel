@@ -1,5 +1,6 @@
 /**
- * plainpanel — signals-first micro-library for research dashboard controls.
+ * plain-panel: signals for working web tools (hardware control, experiments,
+ * procedures). It builds on plain-site: plain HTML, browser defaults.
  *
  * The invariants (the whole framework, in four sentences):
  *   1. All state lives in one store of signals; the DOM is a projection of it.
@@ -13,4 +14,4 @@ export { signal, computed, effect, effectScope, batch, untracked, trigger, isSig
 export { bind, resolveValue, resolveTarget, type Scope } from './binder.js';
 export { bindText, bindShow, bindClass, bindDisabled, bindInert, bindGauge, bindValue, bindWheel, listen, } from './bindings.js';
 export { panel, Panel, type PanelOptions, type ControlOptions, type SliderOptions, type SelectOption } from './panel.js';
-export { series, connect, type Series, type Socket, type SocketOptions } from './edge.js';
+export { series, connect, task, download, type Series, type Socket, type SocketOptions, type Task, type TaskStatus } from './edge.js';

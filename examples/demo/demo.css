@@ -1,4 +1,4 @@
-/* Structure only: the panel grid, its resize handles, and the scene page. Every control renders with browser defaults. Layout is app policy, so
+/* The panel grid, its resize handles, the scene page, and the panel paint and corners (DESIGN.md §1). Every control renders with browser defaults. Layout is app policy, so
    it all lives here, not in the library. */
 
 /* color-scheme flips the native controls; the theme toggle sets data-theme */

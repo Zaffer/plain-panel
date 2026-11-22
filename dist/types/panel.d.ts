@@ -2,9 +2,9 @@
  * Programmatic panel builder — the second entry point, for quick experiment
  * panels. Generates the same native elements you would write by hand
  * (details/summary, label, output, input) bound with the same primitives the
- * attribute binder uses. No CSS required: each folder is a fieldset around
- * its details, so the native border shows the nesting. The optional
- * plainpanel.css theme targets .pp-panel / .pp-folder for the polytopy look.
+ * attribute binder uses. No CSS: each folder is a fieldset around its
+ * details, so the native border shows the nesting. The pp-* classes are
+ * stable hooks for an app's functional CSS (DESIGN.md §1), never for looks.
  *
  *   const p = panel('Training');
  *   p.slider('Learning rate', params.learningRate, { min: 0.001, max: 0.1, step: 0.001 });

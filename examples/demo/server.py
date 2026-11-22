@@ -1,4 +1,4 @@
-# Mock experiment rig for the plainpanel socket example.
+# Mock experiment rig for the plain-panel socket example.
 #
 # The server is the only source of truth: it owns all state, validates every
 # command, and pushes a full Snapshot at 10 Hz. The pydantic models below ARE
@@ -120,7 +120,7 @@ async def lifespan(_: FastAPI):
     task.cancel()
 
 
-app = FastAPI(title="plainpanel mock rig", lifespan=lifespan)
+app = FastAPI(title="plain-panel mock rig", lifespan=lifespan)
 
 
 # ---------- API ----------

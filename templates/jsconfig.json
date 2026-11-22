@@ -1,0 +1,19 @@
+{
+  // Type-checks the templates' plain JS (no build step: JSDoc types only).
+  // `npm run typecheck` runs it. "plain-panel" resolves like the importmap does.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": { "plain-panel": ["../dist/plain-panel.d.ts"] }
+  },
+  "include": ["*/*.js"]
+}

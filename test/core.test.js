@@ -12,7 +12,8 @@ import {
   resolveTarget,
   series,
   connect,
-} from '../dist/plainpanel.js';
+  task,
+} from '../dist/plain-panel.js';
 
 test('signal: read, write, === short-circuit', () => {
   const s = signal(1);
@@ -133,7 +134,7 @@ test('connect: a bad URL reports once, does not throw, app keeps running', () =>
     assert.equal(sock.send({}), false);
     sock.close();
     assert.equal(errors.length, 1);
-    assert.match(errors[0], /plainpanel: connect\(\) failed/);
+    assert.match(errors[0], /plain-panel: connect\(\) failed/);
   } finally {
     console.error = realError;
   }
@@ -157,7 +158,7 @@ test('series: rolling capacity, gaps, reactive read, clear', () => {
 });
 
 test('bindClass: dynamic classes ride on top of authored classes', async () => {
-  const { bindClass, signal: sig } = await import('../dist/plainpanel.js');
+  const { bindClass, signal: sig } = await import('../dist/plain-panel.js');
   // duck-typed element: bindClass only reads classList once and writes setAttribute
   let written = '';
   const el = {
@@ -177,4 +178,32 @@ test('bindClass: dynamic classes ride on top of authored classes', async () => {
   status(['a', 'b']); // string[] form
   assert.equal(written, 'chip wide a b');
   stop();
+});
+
+test('task: pending → done, result kept; failure → failed, error kept, never rejects', async () => {
+  let release;
+  const t = task((x) => new Promise((r) => (release = () => r(x * 2))));
+  assert.equal(t.status(), 'idle');
+  const p = t.run(21);
+  assert.equal(t.pending(), true);
+  await assert.rejects(t.run(1), /plain-panel: task.run\(\) called while pending/);
+  release();
+  assert.equal(await p, 42);
+  assert.equal(t.status(), 'done');
+  assert.equal(t.result(), 42);
+
+  const errors = [];
+  const original = console.error;
+  console.error = (...a) => errors.push(a.join(' '));
+  try {
+    const bad = task(async () => {
+      throw new Error('no device');
+    });
+    assert.equal(await bad.run(), undefined);
+    assert.equal(bad.status(), 'failed');
+    assert.equal(bad.error(), 'no device');
+    assert.match(errors[0], /plain-panel: task failed/);
+  } finally {
+    console.error = original;
+  }
 });

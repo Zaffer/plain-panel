@@ -638,7 +638,7 @@ function bindValue(el, sig) {
     stop = effect2(() => {
       const selected = sig();
       if (!Array.isArray(selected)) {
-        throw new Error("plainpanel: a select[multiple] binding needs a signal holding an array");
+        throw new Error("plain-panel: a select[multiple] binding needs a signal holding an array");
       }
       for (const option of el.options) option.selected = selected.includes(option.value);
     });
@@ -696,7 +696,7 @@ function walk(scope, path) {
   for (const key of path.split(".")) {
     if (isReadable(current)) current = current();
     if (current == null || !(key in Object(current))) {
-      throw new Error(`plainpanel: path "${path}" not found in scope (stopped at "${key}")`);
+      throw new Error(`plain-panel: path "${path}" not found in scope (stopped at "${key}")`);
     }
     current = current[key];
   }
@@ -706,7 +706,7 @@ function resolveValue(scope, path) {
   const v = walk(scope, path);
   if (isReadable(v)) return v();
   if (typeof v === "function") {
-    throw new Error(`plainpanel: path "${path}" resolves to a plain function \u2014 bindable values must be signal(), computed(), or plain data`);
+    throw new Error(`plain-panel: path "${path}" resolves to a plain function \u2014 bindable values must be signal(), computed(), or plain data`);
   }
   return v;
 }
@@ -723,7 +723,7 @@ function bind(root, scope) {
   const writable = (path, attr) => {
     const leaf = untracked(() => resolveTarget(scope, path));
     if (!(typeof leaf === "function" && isSignal2(leaf))) {
-      throw new Error(`plainpanel: ${attr}="${path}" must point to a signal(), got ${typeof leaf}`);
+      throw new Error(`plain-panel: ${attr}="${path}" must point to a signal(), got ${typeof leaf}`);
     }
     return ((...args) => {
       const target = resolveTarget(scope, path);
@@ -733,7 +733,7 @@ function bind(root, scope) {
   const handler = (path) => {
     const leaf = untracked(() => resolveTarget(scope, path));
     if (typeof leaf !== "function" || isReadable(leaf)) {
-      throw new Error(`plainpanel: data-on handler "${path}" is not a function`);
+      throw new Error(`plain-panel: data-on handler "${path}" is not a function`);
     }
     return (e) => resolveTarget(scope, path)(e);
   };
@@ -744,7 +744,7 @@ function bind(root, scope) {
     const d = el.dataset;
     if (d.each !== void 0) {
       if (!(el instanceof HTMLTemplateElement)) {
-        throw new Error(`plainpanel: data-each="${d.each}" only works on <template> elements`);
+        throw new Error(`plain-panel: data-each="${d.each}" only works on <template> elements`);
       }
       stops.push(bindEach(el, scope));
       continue;
@@ -768,7 +768,7 @@ function bind(root, scope) {
     if (d.on !== void 0) {
       for (const pair of d.on.trim().split(/\s+/)) {
         const i = pair.indexOf(":");
-        if (i < 1) throw new Error(`plainpanel: data-on="${pair}" must be "event:path"`);
+        if (i < 1) throw new Error(`plain-panel: data-on="${pair}" must be "event:path"`);
         stops.push(listen(el, pair.slice(0, i), handler(pair.slice(i + 1))));
       }
     }
@@ -782,7 +782,7 @@ function bindEach(tpl, scope) {
   const keyPath = (tpl.dataset.key ?? "").trim();
   if (!keyPath) {
     throw new Error(
-      `plainpanel: data-each="${path}" requires data-key \u2014 a unique item field like data-key="id", data-key="$item" for primitive items, or data-key="$index" for explicitly positional rows`
+      `plain-panel: data-each="${path}" requires data-key \u2014 a unique item field like data-key="id", data-key="$item" for primitive items, or data-key="$index" for explicitly positional rows`
     );
   }
   const keyOf = (item, index) => {
@@ -791,7 +791,7 @@ function bindEach(tpl, scope) {
     if (isReadable(key)) key = key();
     if (typeof key === "object" && key !== null) {
       throw new Error(
-        `plainpanel: data-key="${keyPath}" produced an object \u2014 keys must be primitive (fresh objects would defeat tracking); key by a field instead`
+        `plain-panel: data-key="${keyPath}" produced an object \u2014 keys must be primitive (fresh objects would defeat tracking); key by a field instead`
       );
     }
     return key;
@@ -804,7 +804,7 @@ function bindEach(tpl, scope) {
   const stopEffect = effect2(() => {
     const items = resolveValue(scope, path);
     if (!Array.isArray(items)) {
-      throw new Error(`plainpanel: data-each="${path}" must read an array, got ${typeof items}`);
+      throw new Error(`plain-panel: data-each="${path}" must read an array, got ${typeof items}`);
     }
     untracked(() => {
       const next = /* @__PURE__ */ new Map();
@@ -812,7 +812,7 @@ function bindEach(tpl, scope) {
       items.forEach((itemValue, i) => {
         const key = keyOf(itemValue, i);
         if (next.has(key)) {
-          throw new Error(`plainpanel: duplicate data-key value "${String(key)}" in data-each="${path}"`);
+          throw new Error(`plain-panel: duplicate data-key value "${String(key)}" in data-each="${path}"`);
         }
         let row = rows.get(key);
         if (row) {
@@ -1034,7 +1034,7 @@ function connect(url, opts) {
     try {
       ws = new WebSocket(typeof url === "function" ? url() : url);
     } catch (err) {
-      console.error("plainpanel: connect() failed \u2014", err);
+      console.error("plain-panel: connect() failed \u2014", err);
       return;
     }
     ws.onopen = () => isConnected(true);
@@ -1060,6 +1060,51 @@ function connect(url, opts) {
     }
   };
 }
+function task(fn) {
+  const status = signal2("idle");
+  const error = signal2("");
+  const result = signal2(void 0);
+  return Object.freeze({
+    status: computed2(() => status()),
+    pending: computed2(() => status() === "pending"),
+    error: computed2(() => error()),
+    result: computed2(() => result()),
+    async run(...args) {
+      if (untracked(() => status()) === "pending") {
+        throw new Error('plain-panel: task.run() called while pending: disable its control with data-disabled="<task>.pending"');
+      }
+      batch(() => {
+        status("pending");
+        error("");
+      });
+      try {
+        const r = await fn(...args);
+        batch(() => {
+          result(r);
+          status("done");
+        });
+        return r;
+      } catch (err) {
+        console.error("plain-panel: task failed:", err);
+        batch(() => {
+          error(err instanceof Error ? err.message : String(err));
+          status("failed");
+        });
+        return void 0;
+      }
+    }
+  });
+}
+function download(filename, content, type = "text/plain") {
+  const text = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+  if (typeof content !== "string") type = "application/json";
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 export {
   Panel,
   batch,
@@ -1074,6 +1119,7 @@ export {
   bindWheel,
   computed2 as computed,
   connect,
+  download,
   effect2 as effect,
   effectScope2 as effectScope,
   isComputed2 as isComputed,
@@ -1084,6 +1130,7 @@ export {
   resolveValue,
   series,
   signal2 as signal,
+  task,
   trigger2 as trigger,
   untracked
 };

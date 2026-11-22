@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plain-panel</title>
+<meta name="description" content="plain-site for tools that do work: hardware control, experiments, procedures. Plain HTML, one store of signals, no build step.">
+<link rel="icon" href="data:,">
+<meta name="color-scheme" content="light dark">
+</head>
+<body>
+
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td></td><td width="720">
+
+<center>
+<h1>plain-panel</h1>
+<p>plain-site for tools that do work.</p>
+<p>[ <a href="#templates" accesskey="t">Templates</a> ]
+[ <a href="#library" accesskey="l">Library</a> ]
+[ <a href="#agents" accesskey="a">Agents</a> ]
+[ <a href="#read" accesskey="r">Read</a> ]</p>
+</center>
+
+<hr noshade size="1">
+
+<h2 id="what">What this is</h2>
+
+<p>A house style, and a small library, for web pages that do a job: control hardware,
+run experiments, take an operator through a procedure. Not for marketing.</p>
+
+<p>It builds on <a href="https://zaffer.github.io/plain-site/">plain-site</a>, and its
+<a href="https://github.com/Zaffer/plain-site/blob/main/MANIFESTO.md">manifesto</a> applies
+in full: plain HTML, the browser's own look, native controls, emoji next to words, colour
+only where it means something. plain-panel adds two things:</p>
+
+<ul>
+<li><b>Signals.</b> One store holds all the state. HTML attributes hold paths into it. The
+page always shows the ground truth: what is pending, what failed, how old the data is.</li>
+<li><b>One exception: functional CSS.</b> A few lines, from a short allowlist, where a tool
+needs a layout that HTML cannot give, like a stop button that never scrolls away, and a
+panel paint with slightly round corners so each panel's edge shows. No fonts or borders.
+With the CSS off, every value and control is still there.</li>
+</ul>
+
+<h2 id="templates">Templates</h2>
+
+<p>Three screen shapes cover most tools. Copy the closest one and change it. Each one runs
+here as it is, against a fake backend in <code>sim.js</code>: replace that one file to
+connect a real device or server.</p>
+
+<table border="1" cellpadding="6" cellspacing="0" width="100%">
+<tr bgcolor="gray"><th align="left">Template</th><th align="left">Shape and use</th><th align="left">CSS</th></tr>
+<tr><td valign="top" nowrap><a href="templates/station/" accesskey="1">1. Station</a></td>
+<td>A workbench in the shape of an IDE: top bar, side bar, main, bottom panel, status bar.
+Each region is a row of tabs over one page. Drag the gaps between them to resize; it fills
+a window of any size. The example is a test bench: a signal source to start, stop and
+measure, a chart, a table of captures, a log, and every native control, bound.</td>
+<td valign="top">24 rules</td></tr>
+<tr><td valign="top" nowrap><a href="templates/lab/" accesskey="2">2. Lab</a></td>
+<td>Two columns that wrap. For experiments: set up a training run, queue it, watch the
+curves, compare runs, inspect one, reuse its config. The setup form is made with the
+<code>panel()</code> builder.</td>
+<td valign="top">10 lines</td></tr>
+<tr><td valign="top" nowrap><a href="templates/runsheet/" accesskey="3">3. Sheet</a></td>
+<td>One column, a document. For procedures: a load cell calibration in five steps. Each
+step unlocks when the one before it passes. The draft survives a reload; the result is a
+downloadable, printable record.</td>
+<td valign="top">none</td></tr>
+</table>
+
+<p>The <a href="examples/demo/">demo</a> is the specimen page: every native control,
+bound, with a three.js scene. Its experiment panels need the mock server
+(<code>npm run server</code>), so they stay offline here.</p>
+
+<p><small>Note: <kbd>1</kbd>-<kbd>3</kbd> are access keys: <kbd>Alt</kbd>+key in Chrome,
+<kbd>Ctrl</kbd>+<kbd>Option</kbd>+key in Safari.</small></p>
+
+<h2 id="library">Library</h2>
+
+<p>About 900 lines of TypeScript, built to one ES module. No build step for you.</p>
+
+<pre wrap>
+&lt;label for="gain"&gt;gain &lt;output data-text="views.gain"&gt;&lt;/output&gt;&lt;/label&gt;
+&lt;input id="gain" type="range" min="0" max="1" step="0.01" data-bind="state.gain"&gt;
+&lt;button data-on="click:actions.save" data-disabled="tasks.save.pending"&gt;💾 save&lt;/button&gt;
+
+&lt;script type="module"&gt;
+import { signal, computed, task, bind } from
+  'https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js';
+
+const state = { gain: signal(0.5) };
+const views = { gain: computed(() =&gt; state.gain().toFixed(2)) };
+const tasks = { save: task(() =&gt; fetch('/api/gain', { method: 'POST', body: String(state.gain()) })) };
+const actions = { save: () =&gt; tasks.save.run() };
+bind(document.body, { state, views, tasks, actions });
+&lt;/script&gt;
+</pre>
+
+<p>Signals, computeds and effects; <code>bind()</code> for the <code>data-*</code>
+attributes; <code>panel()</code> to build a form from code; <code>task()</code> for
+requests that show pending and failure; <code>series()</code>, <code>connect()</code> and
+<code>download()</code> at the edge. The full API is in the
+<a href="README.md">README</a>.</p>
+
+<h2 id="agents">For agents</h2>
+
+<p>The point of a house style is that every new tool looks and works like the last one,
+whoever builds it. Give an AI agent this brief:</p>
+
+<pre wrap>
+Build this tool with plain-panel (https://github.com/Zaffer/plain-panel).
+Read DESIGN.md first, then README.md. Copy the closest template from
+templates/ (station, lab or runsheet). Change sim.js to talk to the real
+backend and keep its API. Follow the checklist at the end of DESIGN.md.
+</pre>
+
+<h2 id="read">Read</h2>
+
+<dl>
+<dt><a href="DESIGN.md">DESIGN.md</a></dt>
+<dd>The house style: the CSS allowlist, the screen shapes, the rules for controls and
+feedback, the emoji set, and a checklist.</dd>
+<dt><a href="README.md">README.md</a></dt>
+<dd>The library: every function and attribute.</dd>
+<dt><a href="https://github.com/Zaffer/plain-site/blob/main/MANIFESTO.md">plain-site MANIFESTO</a></dt>
+<dd>The principles under all of it.</dd>
+<dt><a href="https://github.com/Zaffer/plain-panel">Source</a></dt>
+<dd>On GitHub. MIT licence.</dd>
+</dl>
+
+<hr noshade size="1">
+
+<p><small>Last updated 2026-11-22 | <a href="#">top</a></small></p>
+
+</td><td></td></tr></table>
+
+</body>
+</html>
