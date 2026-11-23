@@ -77,7 +77,7 @@ const ui = {
   metric: signal(/** @type {'val' | 'train' | 'acc'} */ ('val')),
   inspect: signal(''), // the id of the run on the inspect page
   theme: signal(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-  noCss: signal(false), // turns the stylesheet off: the page must still work (DESIGN.md §1)
+  noCss: signal(false), // turns the stylesheet off: the page should still work (DESIGN.md §1)
 };
 
 // ---------- requests to the server: each one is a task ----------

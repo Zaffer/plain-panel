@@ -36,10 +36,10 @@ only where it means something. plain-panel adds two things:</p>
 <ul>
 <li><b>Signals.</b> One store holds all the state. HTML attributes hold paths into it. The
 page always shows the ground truth: what is pending, what failed, how old the data is.</li>
-<li><b>One exception: functional CSS.</b> A few lines, from a short allowlist, where a tool
-needs a layout that HTML cannot give, like a stop button that never scrolls away, and a
-panel paint with slightly round corners so each panel's edge shows. No fonts or borders.
-With the CSS off, every value and control is still there.</li>
+<li><b>A little functional CSS.</b> A few lines where a tool needs a layout that HTML
+cannot give, like a stop button that stays on screen, and a panel paint with slightly
+round corners so each panel's edge shows. Each line does a job. With the CSS off, every
+value and control is still there.</li>
 </ul>
 
 <h2 id="templates">Templates</h2>
@@ -51,11 +51,12 @@ connect a real device or server.</p>
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
 <tr bgcolor="gray"><th align="left">Template</th><th align="left">Shape and use</th><th align="left">CSS</th></tr>
 <tr><td valign="top" nowrap><a href="templates/station/" accesskey="1">1. Station</a></td>
-<td>A workbench in the shape of an IDE: top bar, side bar, main, bottom panel, status bar.
-Each region is a row of tabs over one page. Drag the gaps between them to resize; it fills
-a window of any size. The example is a test bench: a signal source to start, stop and
-measure, a chart, a table of captures, a log, and every native control, bound.</td>
-<td valign="top">24 rules</td></tr>
+<td>A workbench in the shape of an IDE: top bar, activity bar, side bar, main, bottom
+panel, status bar. Symbols choose the view or page of each region. Drag the grips between
+them to resize; it fills a window of any size. The example is a test bench: a signal
+source to start, stop and measure, a chart, a table of captures, a log, and every native
+control, bound.</td>
+<td valign="top">27 rules</td></tr>
 <tr><td valign="top" nowrap><a href="templates/lab/" accesskey="2">2. Lab</a></td>
 <td>Two columns that wrap. For experiments: set up a training run, queue it, watch the
 curves, compare runs, inspect one, reuse its config. The setup form is made with the
@@ -111,15 +112,16 @@ whoever builds it. Give an AI agent this brief:</p>
 Build this tool with plain-panel (https://github.com/Zaffer/plain-panel).
 Read DESIGN.md first, then README.md. Copy the closest template from
 templates/ (station, lab or runsheet). Change sim.js to talk to the real
-backend and keep its API. Follow the checklist at the end of DESIGN.md.
+backend and keep its API. DESIGN.md is a guide: use its list at the end,
+and where you leave an item out, say why in a comment.
 </pre>
 
 <h2 id="read">Read</h2>
 
 <dl>
 <dt><a href="DESIGN.md">DESIGN.md</a></dt>
-<dd>The house style: the CSS allowlist, the screen shapes, the rules for controls and
-feedback, the emoji set, and a checklist.</dd>
+<dd>The house style, as a guide: the functional CSS, the screen shapes, suggestions for
+controls and feedback, the emoji set, and a list to look over.</dd>
 <dt><a href="README.md">README.md</a></dt>
 <dd>The library: every function and attribute.</dd>
 <dt><a href="https://github.com/Zaffer/plain-site/blob/main/MANIFESTO.md">plain-site MANIFESTO</a></dt>

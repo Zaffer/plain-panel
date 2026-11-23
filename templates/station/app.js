@@ -35,7 +35,7 @@ const ui = {
   seconds: signal(2), // how long a measurement takes
   textOpen: signal(true), // the first <details> of the controls view
   theme: signal(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-  noCss: signal(false), // turns the stylesheet off: the page must still work
+  noCss: signal(false), // turns the stylesheet off: the page should still work
 };
 // one signal for each control in the controls view
 const g = {
@@ -63,7 +63,8 @@ const g = {
   color: signal('#e4572e'),
 };
 // region sizes, px: the operator drags the gaps (see actions.rzDown)
-const layout = { side: signal(300), bottom: signal(200) };
+const SIZES = { side: 300, bottom: 200 };
+const layout = { side: signal(SIZES.side), bottom: signal(SIZES.bottom) };
 
 const now = signal(Date.now()); // a clock, so the age of the data stays true
 setInterval(() => now(Date.now()), 100);
@@ -248,6 +249,25 @@ const actions = {
       params.amp(DEFAULTS.amp);
       params.noise(DEFAULTS.noise);
       params.color(DEFAULTS.color);
+    });
+  },
+  /**
+   * A click on a view's symbol in the activity bar. A new view opens the side
+   * bar; the view that is already open closes it, as in an IDE. The click
+   * comes before the radio's input event, so ui.sideTab still holds the view
+   * that was chosen before the click.
+   * @param {Event} e
+   */
+  pickView(e) {
+    const same = /** @type {HTMLInputElement} */ (e.currentTarget).value === ui.sideTab();
+    ui.side(same ? !ui.side() : true);
+  },
+  resetLayout() {
+    batch(() => {
+      layout.side(SIZES.side);
+      layout.bottom(SIZES.bottom);
+      ui.side(true);
+      ui.bottom(true);
     });
   },
   downloadCsv() {

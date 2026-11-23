@@ -31,13 +31,20 @@ Breaking: the project is renamed, and the theme stylesheet is gone.
   device. DESIGN.md rule 18 explains when to be careful, and gives a house set
   of emoji, written with U+FE0F. Glyphs stay where size does not matter (the
   ⋮ ⋯ resize grips). Resize handles also get a "drag to resize" title.
-- Station template: a workbench in the shape of an IDE. Top bar, side bar,
-  main, bottom panel, status bar; each region is a tab row (a radio group)
-  over one page (a section, `hidden` unless chosen). The gaps are the resize
-  handles (drag, or arrow keys); the side bar and bottom panel switch off
-  (Alt+B, Alt+J). It fills a window of any size with no second layout. The
-  example is a test bench: a signal source, a chart, captures, a log, the
-  store as JSON, every native control bound, and a `panel()` twin.
+- Station template: a workbench in the shape of an IDE. Top bar, activity
+  bar, side bar, main, bottom panel, status bar. A selector is a radio group
+  that shows a symbol alone (the word is in `title` and `aria-label`); a page
+  is a section, `hidden` unless chosen. A click on the open view's symbol
+  closes the side bar. The gaps are the resize handles, with ⋮ ⋯ grips (drag,
+  or arrow keys); the side bar and bottom panel switch off (Alt+B, Alt+J).
+  The ☰ menu opens under its button, as a thin-edged sheet laid out by a
+  table. It fills a window of any size with no second layout. The example is
+  a test bench: a signal source, a chart, captures, a log, the store as JSON,
+  every native control bound, and a `panel()` twin.
+- **DESIGN.md is a guide, not a set of rules.** Reworded throughout: each
+  item is a default with its reason, the CSS allowlist is now a list of the
+  CSS in use, and a symbol alone is fine where the set is small and each
+  symbol carries its word in `aria-label` and `title`.
 - Template chart.js: with no CSS on a high-density display the canvas grew
   without end (its box followed its own pixel size). It now draws 1:1 there,
   at the size its HTML `width` / `height` give.

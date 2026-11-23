@@ -173,7 +173,7 @@ const FEATURES = [
 ];
 
 // ---------- commands go TO the server; they never write snap ----------
-// DESIGN.md rule 11: a command reads as pending ("arming…") from the click
+// DESIGN.md item 11: a command reads as pending ("arming…") from the click
 // until a snapshot shows it landed, or the server refuses it. Every
 // experiment control stays locked meanwhile, so nobody clicks twice
 // wondering whether the first one took.
@@ -250,7 +250,7 @@ const actions = {
     drag = null;
   },
 };
-// ---------- arm state: a checkbox switch, not a toggling button (DESIGN.md rule 2) ----------
+// ---------- arm state: a checkbox switch, not a toggling button (DESIGN.md item 2) ----------
 // The checkbox writes arm.on; when it differs from the server, the effect
 // sends the matching command. The server's answer arrives as a snapshot and
 // re-syncs the checkbox; a refused command snaps it back at once.

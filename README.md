@@ -6,9 +6,9 @@ and a small signals library. Plain HTML, one store, no build step.
 
 **Site, templates and demo: https://zaffer.github.io/plain-panel/**
 
-- [DESIGN.md](DESIGN.md) is the house style: it builds on plain-site's
-  manifesto and adds the rules for working screens, with one exception
-  (a short allowlist of functional CSS).
+- [DESIGN.md](DESIGN.md) is the house style, as a guide: it builds on
+  plain-site's manifesto and adds suggestions for working screens, and a
+  little functional CSS.
 - [templates/](templates/) holds three screen shapes to copy:
   **station** (a workbench in the shape of an IDE), **lab** (experiments), **runsheet**
   (procedures). Each one runs against a fake backend in `sim.js`.
@@ -97,7 +97,7 @@ It returns a `Stop` that removes all bindings.
 | `data-bind="path"` | input/select/textarea/details | two-way ⇄ **signal**. A number signal reads back as a number (NaN is never written); anything else as a string. Checkbox → boolean; radio group → one signal, checked by value; `select[multiple]` → string[]; `type=file` → one-way DOM→signal (File[]); `<details>` → open ⇄ boolean; `<progress>`/`<meter>` → one-way value ← readable (computeds welcome) |
 | `data-show="path"` | any element | native `hidden` ← `!value` |
 | `data-class="path"` | any element | dynamic classes ← value (string or string[]), ADDED to the element's authored classes. Status classes (`ok`/`bad`) come and go; layout classes stay. The class attribute is owned by the binding |
-| `data-disabled="path"` | button/input/… | `disabled` ← value. State disables controls; it never hides or moves them |
+| `data-disabled="path"` | button/input/… | `disabled` ← value. The house habit: state disables a control, and does not hide or move it |
 | `data-inert="path"` | any element | native `inert` ← value. Disables the full subtree (focus, clicks, a11y) |
 | `data-on="click:path"` | any element | listener → function in scope. Separate multiple `event:path` pairs with spaces |
 | `data-wheel` | range/number with `data-bind` | the mouse wheel changes the value by `step` |
@@ -118,8 +118,8 @@ drag when the child list of a `<fieldset>` that contains the slider (directly
 or through nested fieldsets) changes. This is native browser behavior; every
 framework triggers it. Children added inside a `<div>` or `<details>` are
 safe. `data-each` changes structure only when membership or order changes.
-Still: put `data-each` templates and async-mounted panels in their own
-container, never directly in a fieldset with sliders.
+So `data-each` templates and async-mounted panels are safest in their own
+container, not directly in a fieldset with sliders.
 
 ## panel(title, opts?)
 
@@ -238,7 +238,7 @@ npm run serve      # static-only server → open :8137/ (templates need no API)
 
 | | Shape | Shows |
 |---|---|---|
-| [templates/station/](templates/station/) | IDE shell that fills the window | a workbench: top bar, side bar, main, bottom panel and status bar, each a tab row over one page, with draggable gaps. The example is a test bench: a signal source with start / stop / measure, a chart, a captures table, a log, the store as JSON, every native control bound, and a `panel()` twin of the form |
+| [templates/station/](templates/station/) | IDE shell that fills the window | a workbench: top bar, activity bar, side bar, main, bottom panel and status bar; symbols choose each region's view or page, and grips between regions resize them. The example is a test bench: a signal source with start / stop / measure, a chart, a captures table, a log, the store as JSON, every native control bound, and a `panel()` twin of the form |
 | [templates/lab/](templates/lab/) | two columns that wrap | experiments: a `panel()`-built setup form, a server-side queue, live curves, a runs table, inspect and reuse |
 | [templates/runsheet/](templates/runsheet/) | one column, no CSS | a procedure: steps that unlock in order, readings with pass/fail, a saved draft, a downloadable record |
 | [examples/demo/](examples/demo/) | specimen | every native control bound, a three.js scene, the panel builder, a schema-driven form, signal vs Observable |

@@ -2,18 +2,20 @@
 <!--
   plain-panel template: STATION. A workbench in the shape of an IDE.
 
-    top bar      the name, the commands that must always be in reach
-    side bar     tabs choose a view; a view is the controls for one job
-    main         tabs choose a page; a page is the work itself
-    bottom       tabs choose a page; a page is what the work left behind
-    status bar   one line: what is true now
+    top bar       the name, the commands to keep in reach
+    activity bar  a column of symbols: each one chooses a side bar view
+    side bar      a view is the controls for one job
+    main          tabs choose a page; a page is the work itself
+    bottom        tabs choose a page; a page is what the work left behind
+    status bar    one line: what is true now
 
-  Every region is the same thing: a row of tabs over one page. A tab row is a
-  radio group, and a page is a section that is hidden unless its tab is
-  chosen. To add a view, add a radio and a section.
+  A selector is a radio group, and a page is a section that is hidden unless
+  its radio is chosen. To add a view, add a radio and a section. The
+  selectors show a symbol alone; the word is in title (hover) and aria-label.
 
-  Drag the gaps (or focus one and use the arrow keys) to resize. The side bar
-  and the bottom panel can be switched off.
+  Drag the grips (or focus one and use the arrow keys) to resize. The side
+  bar and the bottom panel can be switched off; a click on the open view's
+  symbol also closes the side bar, as in an IDE.
 
   The example is a test bench: a signal source to drive live values, and
   every native control, bound. sim.js is the only file that knows the source.
@@ -28,14 +30,14 @@
 <!-- In a copy of this template, point this at
      https://cdn.jsdelivr.net/gh/Zaffer/plain-panel@v0.6.0/dist/plain-panel.js -->
 <script type="importmap">{ "imports": { "plain-panel": "../../dist/plain-panel.js" } }</script>
-<!-- Layout, the panel paint, and three lines of look. Switch it off in the
+<!-- Layout, the panel paint, and a few lines of look. Switch it off in the
      ☰ menu (🚫 no CSS): the page is then one column, top to bottom, and every
      tab, control and value still works. -->
 <style>
 /* THE SHELL. A column: top bar, work area, status bar. The work area is a
-   row: side bar, then main over the bottom panel. It always fills the
-   window exactly, at any size, so there is no second layout for small screens. */
-body { margin: 0; padding: 6px; box-sizing: border-box; height: 100dvh; display: flex; flex-direction: column; gap: 6px; }
+   row: activity bar, side bar, then main over the bottom panel. It always fills
+   the window exactly, at any size, so there is no second layout for small screens. */
+body { margin: 0; padding: 8px; box-sizing: border-box; height: 100dvh; display: flex; flex-direction: column; gap: 8px; }
 #work { flex: 1 1 0; min-height: 0; display: flex; }
 #center { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
 /* Main keeps a share of a small window: the bottom panel gives way first. */
@@ -44,33 +46,41 @@ body { margin: 0; padding: 6px; box-sizing: border-box; height: 100dvh; display:
    (app.js writes --side and --bottom), but never more than half the window. */
 #side { flex: 0 1 min(var(--side, 300px), 50vw); min-width: 0; }
 #bottom { flex: 0 1 min(var(--bottom, 200px), 50dvh); min-height: 0; }
-/* A region is a tab row over one page. The row stays; the page scrolls. */
+/* A region is one page under its selector. The selector stays; the page scrolls. */
 #side, #main, #bottom { display: flex; flex-direction: column; overflow: hidden; }
 section { flex: 1 1 0; min-height: 0; overflow: auto; }
+/* The activity bar: the side bar's selector, one symbol under the other. It
+   stays when the side bar closes. A radio and its symbol stay on one line. */
+#views { display: flex; flex-direction: column; gap: 8px; margin-right: 8px; overflow: auto; }
+nav label { white-space: nowrap; }
 /* The hidden attribute always wins: no layout rule above may show a closed region. */
 [hidden] { display: none !important; }
 /* A fieldset may be narrower than its content, so a narrow side bar scrolls instead of spilling. */
 fieldset { min-width: 0; }
 
-/* THE GAPS ARE THE HANDLES. 6px between regions: drag one, and it lights up
-   under the pointer or the keyboard focus, in the system's own highlight colour. */
-[role=separator] { flex: none; touch-action: none; user-select: none; }
-#rzSide { width: 6px; cursor: col-resize; }
-#rzBottom { height: 6px; cursor: row-resize; }
-[role=separator]:hover, [role=separator]:focus-visible { background: Highlight; }
+/* THE GAPS ARE THE HANDLES. 8px between regions, each with a grip (⋮ ⋯, in
+   the HTML) that this centres. A handle lights up under the pointer or the
+   keyboard focus, in the system's own highlight colours. */
+[role=separator] { flex: none; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; }
+#rzSide { width: 8px; cursor: col-resize; }
+#rzBottom { height: 8px; cursor: row-resize; }
+[role=separator]:hover, [role=separator]:focus-visible { background: Highlight; color: HighlightText; border-radius: 5px; }
 
 /* THE PANEL PAINT. Each region is a box a shade off the page, with slightly
    round corners, so its edge shows without a border. */
 :root { --page: light-dark(#ffffff, #000000); --panel: light-dark(#eeeeee, #111111); }
 body { background: var(--page); }
-header, footer, #side, #main, #bottom { background: var(--panel); border-radius: 5px; }
-fieldset, dialog, [popover] { border-radius: 5px; }
+header, footer, #views, #side, #main, #bottom { background: var(--panel); border-radius: 5px; }
+fieldset { border-radius: 5px; }
 header, footer, nav, section { padding: 4px 8px; }
 
-/* THE LOOK. Native controls already come in the system's interface font at
-   about this size: the text around them joins them. Nothing native is restyled. */
-body { font: 14px/1.4 system-ui, sans-serif; }
-/* Live numbers keep their width, so they do not jitter. */
+/* WHAT FLOATS. The menu and the confirm dialog are sheets of the page colour
+   over the panels, with a thin edge in place of the browser's heavy one. */
+dialog, [popover] { background: var(--page); border: 1px solid GrayText; border-radius: 5px; padding: 8px; }
+/* The menu opens under its button, not in the middle of the window. */
+#menu { inset: auto; margin: 4px 0 0; position-area: bottom span-right; }
+
+/* THE REST. Live numbers keep their width, so they do not jitter. */
 output, td { font-variant-numeric: tabular-nums; }
 /* A longer slider gives finer control; a wider box shows more. */
 input[type=range], textarea { width: 100%; box-sizing: border-box; }
@@ -81,15 +91,23 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 </head>
 <body>
 
-<!-- ═══ TOP BAR: the name, and the commands that must always be in reach ═══ -->
+<!-- ═══ TOP BAR: the name, and the commands to keep in reach ═══ -->
 <header>
 <button popovertarget="menu" aria-label="menu" title="menu">☰</button>
+<!-- A table lines the menu up, so it is as tidy with the CSS off as with it on. -->
 <div popover id="menu">
-<p>theme:
-<label><input type="radio" name="theme" value="dark" data-bind="ui.theme"> ☾ dark</label>
-<label><input type="radio" name="theme" value="light" data-bind="ui.theme"> ☀ light</label>
-<p><label><input type="checkbox" data-bind="ui.noCss"> 🚫 no CSS</label>
-<p><button popovertarget="menu" popovertargetaction="hide">× close</button>
+<table cellpadding="4" cellspacing="0">
+<tr><th align="left">menu</th>
+<td align="right"><button popovertarget="menu" popovertargetaction="hide">× close</button></td></tr>
+<tr><td colspan="2"><hr></td></tr>
+<tr><td>theme</td>
+<td><label><input type="radio" name="theme" value="dark" data-bind="ui.theme"> ☾ dark</label>
+<label><input type="radio" name="theme" value="light" data-bind="ui.theme"> ☀ light</label></td></tr>
+<tr><td>layout</td>
+<td><button data-on="click:actions.resetLayout">🔄 reset</button></td></tr>
+<tr><td>style</td>
+<td><label><input type="checkbox" data-bind="ui.noCss"> 🚫 no CSS</label></td></tr>
+</table>
 </div>
 <strong>Bench</strong> |
 <button data-on="click:actions.start" data-disabled="views.startLocked">▶️ start</button>
@@ -102,15 +120,18 @@ show:
 
 <div id="work">
 
-<!-- ═══ SIDE BAR: the controls, one view for each job ═══ -->
-<aside id="side" data-show="ui.side">
-<nav aria-label="side bar views">
-<label><input type="radio" name="sideTab" value="source" data-bind="ui.sideTab"> source</label>
-<label><input type="radio" name="sideTab" value="controls" data-bind="ui.sideTab"> controls</label>
-<label><input type="radio" name="sideTab" value="builder" data-bind="ui.sideTab"> builder</label>
+<!-- ═══ ACTIVITY BAR: which view the side bar shows. A symbol alone: the
+     word is in title (hover) and aria-label (screen readers). ═══ -->
+<nav id="views" aria-label="side bar views">
+<label title="source"><input type="radio" name="sideTab" value="source" aria-label="source" data-bind="ui.sideTab" data-on="click:actions.pickView"> 🎛️</label>
+<label title="controls"><input type="radio" name="sideTab" value="controls" aria-label="controls" data-bind="ui.sideTab" data-on="click:actions.pickView"> 🧪</label>
+<label title="builder"><input type="radio" name="sideTab" value="builder" aria-label="builder" data-bind="ui.sideTab" data-on="click:actions.pickView"> 🧱</label>
 </nav>
 
-<section data-show="views.side.source">
+<!-- ═══ SIDE BAR: the controls, one view for each job ═══ -->
+<aside id="side" data-show="ui.side">
+
+<section aria-label="source" data-show="views.side.source">
 
 <!-- data-inert: the settings lock while a measurement runs, so its record is true -->
 <fieldset data-inert="tasks.measure.pending">
@@ -136,14 +157,14 @@ wave:
 <label>duration <input type="number" min="1" max="10" step="1" data-bind="ui.seconds" data-disabled="tasks.measure.pending"> s</label>
 <p><button data-on="click:actions.measure" data-disabled="views.measureLocked">▶️ measure</button>
 <small data-text="views.measureNote"></small>
-<p><small>Takes the mean and RMS of the signal, and adds a row to the captures page.
+<p><small>Takes the mean and RMS of the signal, and adds a row to the captures page (📋).
 The source must be running. ⏹️ stop ends a measurement early: it fails, and says so.</small>
 </fieldset>
 
 </section>
 
-<section data-show="views.side.controls">
-<!-- Every native control, bound. Watch the store page in the bottom panel.
+<section aria-label="controls" data-show="views.side.controls">
+<!-- Every native control, bound. Watch the store page (🗄️) in the bottom panel.
      <details name>: a native accordion. The first one's open state is in the store. -->
 <fieldset>
 <legend>every control</legend>
@@ -209,7 +230,7 @@ The source must be running. ⏹️ stop ends a measurement early: it fails, and 
 </fieldset>
 </section>
 
-<section data-show="views.side.builder">
+<section aria-label="builder" data-show="views.side.builder">
 <p><small>The same store, drawn a second time by <code>panel()</code> from app.js.
 Move a control here and its twin in the source view moves too.</small>
 <!-- a div, not a fieldset: panel() adds children at run time (CLAUDE.md) -->
@@ -218,22 +239,22 @@ Move a control here and its twin in the source view moves too.</small>
 </aside>
 
 <div id="rzSide" data-rz="side" data-show="views.sideHandle" role="separator" tabindex="0" title="drag to resize" aria-orientation="vertical" aria-label="resize the side bar: drag, or arrow keys"
-  data-on="pointerdown:actions.rzDown pointermove:actions.rzMove pointerup:actions.rzUp pointercancel:actions.rzUp keydown:actions.rzKey"></div>
+  data-on="pointerdown:actions.rzDown pointermove:actions.rzMove pointerup:actions.rzUp pointercancel:actions.rzUp keydown:actions.rzKey">⋮</div>
 
 <div id="center">
 
 <!-- ═══ MAIN: the work itself ═══ -->
 <main id="main">
 <nav aria-label="main pages">
-<label><input type="radio" name="mainTab" value="chart" data-bind="ui.mainTab"> chart</label>
-<label><input type="radio" name="mainTab" value="captures" data-bind="ui.mainTab"> captures <output data-text="views.captureCount"></output></label>
+<label title="chart"><input type="radio" name="mainTab" value="chart" aria-label="chart" data-bind="ui.mainTab"> 📈</label>
+<label title="captures"><input type="radio" name="mainTab" value="captures" aria-label="captures" data-bind="ui.mainTab"> 📋 <output data-text="views.captureCount"></output></label>
 </nav>
 
-<section id="chartPage" data-show="views.main.chart">
+<section id="chartPage" aria-label="chart" data-show="views.main.chart">
 <canvas id="chart" width="640" height="320">A chart of the signal over the last 20 seconds.</canvas>
 </section>
 
-<section data-show="views.main.captures">
+<section aria-label="captures" data-show="views.main.captures">
 <table border="1" cellpadding="4" cellspacing="0" width="100%">
 <thead><tr><th align="left">time</th><th align="left">signal</th><th align="right">samples</th>
 <th align="right">mean</th><th align="right">RMS</th><th align="right">min</th><th align="right">max</th></tr></thead>
@@ -246,23 +267,23 @@ Move a control here and its twin in the source view moves too.</small>
 </template>
 </tbody>
 </table>
-<p data-show="views.noCaptures">No captures yet: start the source, then press ▶️ measure in the source view.
+<p data-show="views.noCaptures">No captures yet: start the source, then press ▶️ measure in the source view (🎛️).
 <p><button data-on="click:actions.downloadCsv" data-disabled="views.noCaptures">⬇️ download CSV</button>
 <button commandfor="confirmDelete" command="show-modal" data-disabled="views.noCaptures">🗑️ delete all…</button>
 </section>
 </main>
 
 <div id="rzBottom" data-rz="bottom" data-show="views.bottomHandle" role="separator" tabindex="0" title="drag to resize" aria-orientation="horizontal" aria-label="resize the bottom panel: drag, or arrow keys"
-  data-on="pointerdown:actions.rzDown pointermove:actions.rzMove pointerup:actions.rzUp pointercancel:actions.rzUp keydown:actions.rzKey"></div>
+  data-on="pointerdown:actions.rzDown pointermove:actions.rzMove pointerup:actions.rzUp pointercancel:actions.rzUp keydown:actions.rzKey">⋯</div>
 
 <!-- ═══ BOTTOM PANEL: what the work left behind ═══ -->
 <div id="bottom" data-show="ui.bottom">
 <nav aria-label="bottom panel pages">
-<label><input type="radio" name="bottomTab" value="log" data-bind="ui.bottomTab"> log</label>
-<label><input type="radio" name="bottomTab" value="store" data-bind="ui.bottomTab"> store</label>
+<label title="log"><input type="radio" name="bottomTab" value="log" aria-label="log" data-bind="ui.bottomTab"> 📜</label>
+<label title="store"><input type="radio" name="bottomTab" value="store" aria-label="store" data-bind="ui.bottomTab"> 🗄️</label>
 </nav>
 
-<section data-show="views.bottom.log">
+<section aria-label="log" data-show="views.bottom.log">
 <table cellpadding="2" cellspacing="0" aria-label="log, newest first">
 <tbody>
 <template data-each="log" data-key="id">
@@ -273,7 +294,7 @@ Move a control here and its twin in the source view moves too.</small>
 </table>
 </section>
 
-<section data-show="views.bottom.store">
+<section aria-label="store" data-show="views.bottom.store">
 <pre data-text="views.json"></pre>
 </section>
 </div>

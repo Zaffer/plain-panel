@@ -4,9 +4,12 @@ plain-panel is plain-site (../plain-site, github.com/Zaffer/plain-site) for
 tools that do work. Read README.md first: it is the full library API and fits
 in context. The source is ~950 lines across six files in src/ — when in
 doubt, read it all. The house style is DESIGN.md: it builds on plain-site's
-MANIFESTO and adds the working-screen rules and the functional-CSS allowlist.
-templates/ (station, lab, runsheet) are the starting points for every tool;
-keep them in line with DESIGN.md, and DESIGN.md in line with them.
+MANIFESTO and adds suggestions for working screens and a list of functional
+CSS. It is a guide, not a set of rules: every item is a default with a
+reason. When a better design goes against an item, build the better design
+and say what you did; do not hold it back. templates/ (station, lab,
+runsheet) are the starting points for every tool; keep them and DESIGN.md
+describing the same thing.
 
 ## Non-negotiable invariants
 
@@ -22,11 +25,13 @@ keep them in line with DESIGN.md, and DESIGN.md in line with them.
 ## Style
 
 - Signals are callables: `s()` reads, `s(v)` writes. Never `.value` (throws).
-- CSS only from DESIGN.md's allowlist (layout, scrolling, tabular digits,
-  the panel paint and 5px corners), in one `<style>`, each rule commented
-  with its job. No other colours, no fonts, no borders: other colour is HTML
-  (`color-scheme` meta, `meter`, `mark`, `bgcolor`). No stylesheet ships with the library. Prefer native
-  elements/attributes (`details`, `fieldset`, `output`, `hidden`,
+- CSS starts from DESIGN.md's list (layout, scrolling, tabular digits, the
+  panel paint and 5px corners), in one `<style>`, each rule commented with
+  its job. Other colours, fonts and borders are usually left out; other
+  colour can come from HTML (`color-scheme` meta, `meter`, `mark`,
+  `bgcolor`). Two checks to keep: the page works with the CSS off, and it
+  fits a window of any size. No stylesheet ships with the library. Prefer
+  native elements/attributes (`details`, `fieldset`, `output`, `hidden`,
   `disabled`) over styled divs.
 - Errors are loud and prefixed `plain-panel:` — never fail silently.
 - The library never imposes app-level UX policy (selectability, focus,

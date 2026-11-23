@@ -10,7 +10,7 @@ type ValueElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 export declare function bindText(el: Element, source: Readable<unknown>, format?: (v: unknown) => string): Stop;
 /** el.hidden tracks !source — uses the native hidden attribute, no CSS involved. */
 export declare function bindShow(el: HTMLElement, source: Readable<unknown>): Stop;
-/** el.disabled tracks source. State disables controls; it never hides or moves them. */
+/** el.disabled tracks source. The house habit: state disables a control, and does not hide or move it. */
 export declare function bindDisabled(el: Element & {
     disabled: boolean;
 }, source: Readable<unknown>): Stop;
